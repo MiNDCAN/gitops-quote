@@ -1,0 +1,23 @@
+{{- /*
+  Deliberately its own chart rather than a template inside quoteplus-cert-manager:
+  a ClusterIssuer needs cert-manager's CRDs to already exist, and Helm renders
+  a chart's own CRDs and resources in the same pass. Separate Application +
+  later sync-wave is the reliable ordering.
+*/}}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  acme:
+    server: {{ .Values.acme.server }}
+    email: {{ required "acme.email is required" .Values.acme.email }}
+    privateKeySecretRef:
+      name: {{ .Values.name }}-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: {{ .Values.acme.ingressClassName }}

@@ -1,0 +1,124 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: quoteplus-rifast-apps
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    customer: rifast
+    type: application-set
+    layer: apps
+  annotations:
+    argocd.argoproj.io/description: "QuotePlus microservices + data for RIFAST's dedicated production environment. A list generator, not a matrix - this repo is one customer folder per environment, not one environment per generator axis. See values/tenants/rifast-prod/."
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          # Data layer (wave 10): must be reachable before the services that
+          # connect to them sync.
+          - service: quoteplus-postgres
+            namespace: quote-postgres
+            wave: "10"
+          - service: quoteplus-redis
+            namespace: quote-redis
+            wave: "10"
+          - service: quoteplus-pgadmin
+            namespace: quote-pgadmin
+            wave: "10"
+          - service: quoteplus-temporal-postgres
+            namespace: quote-temporal
+            wave: "10"
+          # Temporal server/UI (wave 15): between data and the app layer -
+          # the worker (wave 20 below) needs its frontend Service to exist
+          # by connection time.
+          - service: quoteplus-temporal
+            namespace: quote-temporal
+            wave: "15"
+          # App layer (wave 20).
+          - service: quoteplus-frontend
+            namespace: quote-frontend
+            wave: "20"
+          - service: quoteplus-framework
+            namespace: quote-framework
+            wave: "20"
+          - service: quoteplus-mdmservice
+            namespace: quote-mdmservice
+            wave: "20"
+          - service: quoteplus-res-mdm
+            namespace: quote-res-mdm
+            wave: "20"
+          - service: quoteplus-report
+            namespace: quote-report
+            wave: "20"
+          - service: quoteplus-supplier
+            namespace: quote-supplier
+            wave: "20"
+          - service: quoteplus-user-management
+            namespace: quote-user-management
+            wave: "20"
+          - service: quoteplus-customer-management
+            namespace: quote-customer-management
+            wave: "20"
+          - service: quoteplus-language
+            namespace: quote-language
+            wave: "20"
+          - service: quoteplus-management-service
+            namespace: quotemanagement-service
+            wave: "20"
+          - service: quoteplus-distribution-list
+            namespace: quote-distribution-list
+            wave: "20"
+          - service: quoteplus-temporal-worker
+            namespace: quote-temporal-worker
+            wave: "20"
+  template:
+    metadata:
+      name: 'quoteplus-rifast-{{.service}}'
+      namespace: argocd
+      labels:
+        team: quoteplus
+        solution: quoteplus
+        customer: rifast
+        type: application
+        layer: apps
+        service: '{{.service}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{.wave}}'
+    spec:
+      project: quoteplus-rifast-prod
+      destination:
+        name: aks-rifast-prod
+        namespace: '{{.namespace}}'
+      source:
+        repoURL: https://github.com/MiNDCAN/gitops-quote.git
+        # Real customer Applications track the protected production branch,
+        # not main - see this repo's own CLAUDE.md "gitops-quote branching"
+        # section. A typo here would silently have RIFAST's Applications
+        # tracking the wrong branch.
+        targetRevision: production
+        path: 'charts/{{.service}}'
+        helm:
+          releaseName: '{{.service}}'
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - '../../values/tenants/rifast-prod/{{.service}}.yaml'
+      ignoreDifferences:
+        - group: apps
+          kind: StatefulSet
+          jqPathExpressions:
+            - '.spec.volumeClaimTemplates'
+      syncPolicy:
+        # Automated sync enabled from day one here (unlike gitops-quote-mrea's
+        # stage repo, which started manual-only and only enabled this after
+        # the environment was proven end to end). RIFAST's Terraform/ESO
+        # groundwork is already proven against stage's own equivalent
+        # pattern, and a tight go-live timeline (2026-11-30) favors not
+        # needing a manual `argocd app sync` after every Jenkins build.
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - ApplyOutOfSyncOnly=true

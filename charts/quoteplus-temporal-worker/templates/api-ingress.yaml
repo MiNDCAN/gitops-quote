@@ -1,0 +1,35 @@
+{{- if and .Values.api.enabled .Values.api.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "quoteplus.name" . }}-api-ingress
+  labels:
+    app: {{ .Release.Name }}-api
+    app.kubernetes.io/name: {{ .Release.Name }}-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+  {{- with .Values.api.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.api.ingress.className }}
+  {{- if .Values.api.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ required "api.ingress.host is required when api.ingress.enabled" .Values.api.ingress.host }}
+      secretName: {{ .Values.api.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ required "api.ingress.host is required when api.ingress.enabled" .Values.api.ingress.host }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: {{ .Values.api.ingress.path }}
+            backend:
+              service:
+                name: {{ include "quoteplus.name" . }}-api-service
+                port:
+                  number: {{ .Values.api.service.port }}
+{{- end }}

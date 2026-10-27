@@ -1,0 +1,6 @@
+apiVersion: v2
+name: quoteplus-distribution-list
+description: QuotePlus - distribution list service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

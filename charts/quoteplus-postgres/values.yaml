@@ -1,0 +1,46 @@
+# A single Postgres server for the app microservices to use (framework,
+# mdmservice, etc.), separate from quoteplus-metabase's own dedicated
+# Postgres - same shape (plain StatefulSet, not CloudNativePG) as that one,
+# not shared with it. One server, one database; per-service schemas are
+# provisioned inside it, not as separate Postgres instances.
+
+image:
+  repository: postgres
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 5432
+
+# Default database created by the postgres image at first boot. Individual
+# services connect here and use their own schema (see quoteplus-framework's
+# DB_SCHEMA) rather than each getting a separate database.
+database: quoteplus
+
+storage:
+  size: 20Gi
+  storageClassName: managed-csi
+
+resources:
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits:   { cpu: "1", memory: "2Gi" }
+
+# Workload identity was only ever needed for Key Vault access via ESO -
+# disabled now that secrets are committed directly, see CLAUDE.md.
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}
+
+# POSTGRES_USER / POSTGRES_PASSWORD committed directly per-environment -
+# not Key Vault backed.
+secrets: {}

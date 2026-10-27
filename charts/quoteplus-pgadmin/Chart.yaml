@@ -1,0 +1,6 @@
+apiVersion: v2
+name: quoteplus-pgadmin
+description: pgAdmin4 web UI for developer access to the shared quoteplus-postgres instance - internal login only for now, SSO via Keycloak planned as a follow-up (see values.yaml)
+type: application
+version: 0.1.0
+appVersion: "9.17"

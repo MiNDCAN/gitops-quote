@@ -1,0 +1,4 @@
+# Vendored Helm dependency tarballs - Chart.lock pins the version, ArgoCD
+# resolves these from the declared repository at sync time. Not committed,
+# matching gitops-quote-mrea's own (unwritten but consistent) convention.
+charts/*/charts/*.tgz

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  labels:
+    app: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  # Headless: StatefulSet needs stable per-pod DNS, same pattern as
+  # charts/quoteplus-postgres.
+  clusterIP: None
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - name: postgres
+      port: {{ .Values.service.port }}
+      targetPort: 5432

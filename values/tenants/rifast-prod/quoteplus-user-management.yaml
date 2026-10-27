@@ -1,0 +1,37 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-user-management-service-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.user.mindcaninc.com"
+
+# REDIS_HOST is in-cluster, same everywhere. Keycloak values depend on
+# RIFAST's production realm, not yet shared - REPLACE_WITH_REAL_VALUE.
+configApp:
+  QP_KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_CLIENT_UUID: ""
+  QP_KEYCLOAK_WEB_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  VALID_APPLICATIONIDS: "QP"
+  QP_APP_REDIRECT_URL: "https://rifast-quoteplus.mindcaninc.com/"
+  MAGIC_LINK_EXPIRE_TIME: "2700"
+  REDIS_HOST: "quoteplus-redis-service.quote-redis.svc.cluster.local"
+  REDIS_PORT: "6379"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # REDIS_PASSWORD is a no-op either way (chart's Redis has no AUTH
+  # configured, confirmed for stage - same chart used here) but kept for
+  # parity/forward-compatibility.
+  data:
+    QP_KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
+    REDIS_PASSWORD: "rifast-redis-password-noop"

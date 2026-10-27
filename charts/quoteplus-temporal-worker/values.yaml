@@ -1,0 +1,248 @@
+# Temporal worker for quoteplus-stage (QTP-867) - SCAFFOLD, per
+# docs/temporal-setup-plan.md step 4. Copied from charts/quoteplus-framework
+# with service/ingress removed entirely (this worker never accepts inbound
+# traffic - it only polls Temporal's frontend).
+#
+# Real worker code landed 2026-09-30 on MNC_QUOTE_REPO's dev branch:
+# backend/workflow-management-service (package "workflow-engine-service").
+# One image, three processes selected by container command
+# (node dist/main.js = API, node dist/temporal/worker.js = worker,
+# node dist/notifications/dispatcher.js = notifier) - see command: below.
+# The API + notifier are a SEPARATE deployable this chart does not cover
+# (out of QTP-867's current scope - the API needs its own INTERNAL_API_KEY
+# for quote-management-service to call it; ask before building that).
+#
+# Status (2026-09-30): still no published image (CI not wired), and Q7
+# probes are still unanswered - worse, worker.ts has NO HTTP listener at
+# all as written, so httpGet probes cannot target it until the dev team
+# adds one. Do not fill probes in below with guessed values.
+# resources/replicaCount ARE confirmed; DB/user-service config below is
+# read directly from the pushed code (src/database/sequelize.ts,
+# src/directory/directory.ts), not guessed.
+
+replicaCount: 1     # confirmed: 1 worker for stage
+env: "stage"
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-temporal-worker-dev
+  tag: ""            # REQUIRED - CI-owned (DevOps/Naveen Ravi per Q3), not published yet
+  pullPolicy: IfNotPresent
+  pullSecrets: [quoteplus-nexus-secrets]
+
+# Overrides the image's default CMD (node dist/main.js, the API) - without
+# this the worker Deployment would run the wrong process. Matches the
+# image's own "start:worker:prod" script.
+command: ["node", "dist/temporal/worker.js"]
+
+service:
+  enabled: false
+
+ingress:
+  enabled: false
+
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}
+
+envFrom:
+  configMaps:
+    - quoteplus-temporal-worker-configmap
+  secrets:
+    - quoteplus-temporal-worker-secrets
+
+# Confirmed 2026-09-29: task queue quoteplus-workflow-engine, namespace
+# quoteplus. TEMPORAL_ADDRESS points at the server chart's frontend Service
+# (charts/quoteplus-temporal). DATABASE_HOST/PORT and USER_DETAILS_URL match
+# every other service's tenant values (e.g. quoteplus-framework) - this
+# worker reads src/database/sequelize.ts's own `workflow_engine` schema plus
+# the app's DB_SCHEMA on the same search_path (reads quote_participant /
+# rfq_participant directly), and calls user-management-service via
+# src/directory/directory.ts for Keycloak groups/users.
+configApp:
+  TEMPORAL_ADDRESS: "quoteplus-temporal-frontend.quote-temporal.svc.cluster.local:7233"
+  TEMPORAL_NAMESPACE: "quoteplus"
+  TEMPORAL_TASK_QUEUE: "quoteplus-workflow-engine"
+  TEMPORAL_SEARCH_ATTRIBUTES: "true"
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  # Changed to "public" 2026-10-20 on explicit instruction - was
+  # "workflow_engine" (the worker's own dedicated schema). Confirm this is
+  # intentional if the worker starts writing into/reading from the shared
+  # public schema instead of its own.
+  DB_SCHEMA_ENGINE: "public"
+  DB_LOGGING: "false"
+  USER_DETAILS_URL: "https://stage-quoteplus.user.mindcaninc.com"
+  USER_SERVICE_APPLICATION_ID: "QP"
+  HEALTH_PORT: "3011"
+  HEALTH_CHECK_TIMEOUT_MS: "2000"
+  ALLOW_STUB_ACTIVITIES: "false"
+  PORT: "3010"
+  METRICS_PORT: "9464"
+  CLIENT_CODE: "dev"
+  BUSINESS_TIMEZONE: "Asia/Kolkata"
+  KEYCLOAK_URL: "https://keycloak-nonprod.mindcaninc.com"
+  KEYCLOAK_REALM: "QuotePlus-Dev"
+  KEYCLOAK_CLIENT_ID: "qtplus_admin"
+  DIRECTORY_CACHE_TTL_MS: "60000"
+  WORK_QUEUE_STATUS_LOOKUP_TYPE: "work-queue-status"
+  WORK_QUEUE_PRIORITY_LOOKUP_TYPE: "work-queue-priority"
+  NOTIFY_CHANNELS: "Email,In-App"
+  NOTIFY_POLL_MS: "15000"
+  NOTIFY_BATCH_SIZE: "50"
+  NOTIFY_MAX_ATTEMPTS: "5"
+  # Switched to the external ingress URL 2026-10-20 on explicit instruction -
+  # was the in-cluster Service DNS (verified against quote-management-
+  # service's actual Apollo path, no custom `path:` set). This now routes
+  # the worker's GraphQL calls out through the public ingress instead of
+  # staying in-cluster.
+  QUOTE_SERVICE_GRAPHQL_URL: "https://stage-quoteplus.management.mindcaninc.com/quote/graphql"
+  # Confirmed 2026-10-20 (dev team) - explicitly the INTERNAL (in-cluster)
+  # URL, not the public ingress (unlike QUOTE_SERVICE_GRAPHQL_URL above,
+  # which was deliberately switched to the external URL) - this is
+  # service-to-service plumbing, not the external GraphQL business path.
+  # NOTIFICATION_BADGE_URL deliberately not set - optional, defaults to the
+  # /badge sibling of this URL per the dev team's own note.
+  NOTIFICATION_API_URL: "http://quoteplus-management-service-service.quotemanagement-service.svc.cluster.local/internal/notifications/send"
+
+# Real values committed directly - not Key Vault backed, see CLAUDE.md.
+#
+# DATABASE_*: answered by the dev team's ops runbook (2026-09-30) - reuse
+# the app's existing quotepluscustuser01/mnc_quoteplus_customerdemo
+# credentials (same as quoteplus-framework/quoteplus-management-service),
+# not a dedicated role. That account needs GRANT CREATE ON DATABASE
+# mnc_quoteplus_customerdemo TO quotepluscustuser01 added so it can create
+# its own workflow_engine schema - a one-off against the APP's Postgres,
+# deliberately left to the dev team/DBA rather than run from here (this
+# session does not touch the app DB, per explicit instruction). Once
+# granted, the real values are already known (see
+# values/tenants/quoteplus-stage/quoteplus-management-service.yaml) - just
+# not filled in here without that grant confirmed first.
+#
+# SERVICE_TOKEN: checked quote-management-service's own code (main.ts,
+# app.module.ts) directly - it has NO bearer/SERVICE_TOKEN validation
+# anywhere. Setting a value here would be a no-op until that service adds
+# one (an app-repo change, out of scope here). Left empty rather than
+# filled with a token that does nothing.
+secrets:
+  DATABASE_NAME: "REPLACE_WITH_REAL_VALUE"
+  DATABASE_USER_NAME: "REPLACE_WITH_REAL_VALUE"
+  DATABASE_PASSWORD: "REPLACE_WITH_REAL_VALUE"
+  SERVICE_TOKEN: "REPLACE_WITH_REAL_VALUE"
+
+# Confirmed 2026-09-30 from the dev team's "health endpoints added" commit
+# (src/health/health.ts, src/temporal/worker.ts) and their ops runbook:
+# one health server on HEALTH_PORT (3011), shared by liveness and
+# readiness. Liveness answers as soon as the health server starts, before
+# Temporal/DB connect. Readiness returns 503 with a checks object until
+# both Temporal responds AND the worker is actively polling its task queue.
+probes:
+  port: 3011
+  liveness:
+    path: "/health/live"
+  readiness:
+    path: "/health/ready"
+
+# Confirmed 2026-09-30 (matches the requests/limits already used by the
+# other MNC_QUOTE_REPO services, e.g. quoteplus-quotemanagement-service-deployment.yaml).
+resources:
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits:   { cpu: "500m", memory: "1Gi" }
+
+# Confirmed 2026-10-20 (Dinesh Kumar M): the worker's metrics port is 9464
+# (matches METRICS_PORT in configApp above), reachable only via an internal
+# Service for Prometheus scraping - never an Ingress. `enabled` still false:
+# scraping itself wasn't requested, just the port number corrected (was
+# 9090, a stale guess that never matched METRICS_PORT). Flip to true and add
+# a ClusterIP Service if/when Prometheus scraping is actually wired up.
+metrics:
+  enabled: false
+  port: 9464
+  path: /metrics
+
+# The API process of this same image (node dist/main.js, the image's default
+# CMD per its Dockerfile) - added 2026-10-20 so the dev team can reach it
+# directly. Always uses .Values.image.repository/tag above (the exact same
+# artifact the worker runs, just a different command) - no separate Jenkins
+# stage needed, and it can never drift to a different build than the worker.
+# See templates/api-*.yaml for why this lives in the same chart/namespace
+# instead of a new service.
+api:
+  enabled: true
+  replicaCount: 1
+  command: ["node", "dist/main.js"]
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 80
+    targetPort: 3010   # PORT, per the Dockerfile's EXPOSE comment
+  ingress:
+    enabled: true
+    className: nginx
+    path: /
+    host: ""           # set per environment
+    annotations:
+      cert-manager.io/cluster-issuer: quoteplus-letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    tls:
+      enabled: true
+      secretName: quoteplus-temporal-worker-api-tls
+  # Confirmed 2026-10-20 (Dinesh Kumar M) - same /health/live, /health/ready
+  # shape as the worker's probes, served on the API's own traffic port.
+  probes:
+    liveness:
+      path: "/health/live"
+    readiness:
+      path: "/health/ready"
+  # Same shape as the worker's own resources - not independently confirmed
+  # with the dev team, adjust once real usage is observed.
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "500m", memory: "1Gi" }
+
+# The notifier process of this same image (node dist/notifications/dispatcher.js)
+# - added 2026-10-20, confirmed by the dev team. No Service, no Ingress at
+# all (unlike the API) - it takes zero inbound traffic, not even for
+# Prometheus; kubelet probes containerPort 3012 directly. Readiness here is
+# intentionally simpler than the worker's: "the database answers, nothing
+# else" (not Temporal, not quote-management-service reachability).
+notifier:
+  enabled: true
+  replicaCount: 1   # confirmed - scaling up won't cause duplicate sends
+  command: ["node", "dist/notifications/dispatcher.js"]
+  # HEALTH_PORT in the shared configApp above is "3011" (the worker's own
+  # value) - the notifier needs "3012" instead, so it's overridden per-
+  # container in templates/notifier-deployment.yaml rather than changed
+  # here, since changing it here would break the worker's own HEALTH_PORT
+  # (same shared ConfigMap, both Deployments' envFrom point at it).
+  healthPort: 3012
+  probes:
+    # Re-enabled 2026-10-20 - image 1.0.0-94 confirmed live: "[notifier]
+    # health on http://localhost:3012/health/live and /health/ready" in its
+    # own startup log, and the missing-table error (public.task_notifications)
+    # is also gone (84min uptime, zero errors). Was disabled against
+    # 1.0.0-50, which had neither.
+    enabled: true
+    liveness:
+      path: "/health/live"
+    readiness:
+      path: "/health/ready"
+  terminationGracePeriodSeconds: 60   # confirmed - same as the worker
+  # Confirmed smaller than the worker's 250m/512Mi-500m/1Gi - exact sizing
+  # not given beyond "much smaller", so this is a reasonable starting point
+  # (matches this repo's smallest existing profile, e.g. quoteplus-redis).
+  # Adjust once real usage is observed.
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "250m", memory: "256Mi" }

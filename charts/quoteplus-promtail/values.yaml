@@ -1,0 +1,24 @@
+# Hand-rolled to match the real dev environment's promtail.yaml exactly,
+# with two deliberate adaptations for AKS (containerd, not Docker):
+#   - pipeline_stages uses `cri: {}` instead of `docker: {}` - containerd
+#     writes logs in CRI format, not Docker's JSON log format, and using
+#     the wrong parser silently produces unparsed/garbled log lines.
+#   - the /var/lib/docker/containers hostPath mount is dropped - it's
+#     Docker-specific and doesn't exist on containerd nodes. Not actually
+#     needed anyway: the real scrape config's __path__ already targets
+#     /var/log/pods/..., which the /var/log hostPath mount already covers
+#     (kubelet manages that path the same way regardless of runtime).
+
+image:
+  repository: grafana/promtail
+  # Real deployment uses an untagged (:latest) image - pinned here to the
+  # upstream chart's own appVersion instead, a known-good real release.
+  # Do not go back to :latest, same reasoning as quoteplus-redis.
+  tag: "3.0.0"
+  pullPolicy: IfNotPresent
+
+lokiUrl: "REPLACE_LOKI_PUSH_URL"
+
+resources:
+  requests: { cpu: "100m", memory: "128Mi" }
+  limits:   { cpu: "200m", memory: "256Mi" }

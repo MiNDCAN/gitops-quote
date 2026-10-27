@@ -1,0 +1,56 @@
+{{- /*
+  ESO reaches Azure Key Vault via AKS workload identity - no credential
+  stored in this repo. One ServiceAccount + one SecretStore per namespace
+  that consumes secrets - the SecretStore is namespaced, so a single
+  cluster-wide one would not do, and the ServiceAccount must live in the
+  WORKLOAD namespace, not the operator's own.
+
+  Caution for whoever wires this up: the federated credential on the
+  user-assigned managed identity
+  (QUOTE_AZURE_INFRA/terraform/tenants/<customer>-prod/workload_identity.tf)
+  must have subject
+      system:serviceaccount:<workload-namespace>:<serviceAccountName>
+  for EACH namespace listed below, matching that Terraform file's
+  workload_identity_namespaces exactly. Get that subject wrong and the
+  SecretStore reports InvalidProviderConfig and every ExternalSecret sits in
+  SecretSyncedError - restart the ESO controller after fixing a federated
+  credential, it caches the Azure client.
+*/}}
+{{- $g := .Values.workloadIdentity -}}
+{{- if $g.enabled }}
+{{- range $ns := $g.namespaces }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $g.serviceAccountName }}
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+    azure.workload.identity/use: "true"
+  annotations:
+    azure.workload.identity/client-id: {{ required "workloadIdentity.clientId is required" $g.clientId | quote }}
+    azure.workload.identity/tenant-id: {{ required "workloadIdentity.tenantId is required" $g.tenantId | quote }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: {{ $g.storeName }}
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: {{ required "workloadIdentity.vaultUrl is required" $g.vaultUrl | quote }}
+      # tenantId deliberately omitted here - ESO treats tenantId set in both
+      # this spec AND the ServiceAccount's azure.workload.identity/tenant-id
+      # annotation as an error ("multiple tenantID found"), even when they
+      # agree. The annotation above is the single source of truth.
+      serviceAccountRef:
+        name: {{ $g.serviceAccountName }}
+{{- end }}
+{{- end }}

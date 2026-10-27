@@ -1,0 +1,68 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-supplier-service-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.supplier.mindcaninc.com"
+
+# DNB_URL/OSM_URL are public third-party APIs, same regardless of customer -
+# not overridden. Everything Azure/SharePoint-related depends on RIFAST's
+# own tenant, not mindcaninc's - REPLACE_WITH_REAL_VALUE throughout.
+configApp:
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  DNB_URL: "https://plus.dnb.com"
+  OSM_URL: "https://nominatim.openstreetmap.org"
+  USERS_API_URL: "https://rifast-quoteplus.user.mindcaninc.com/users"
+  SUP_MDM_URL: "https://rifast-quoteplus.mdm.mindcaninc.com/mdm/graphql"
+  QUOTE_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
+  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com"
+  EMAIL_HOST: "smtp-mail.outlook.com"
+  EMAIL_PORT: "587"
+  EMAIL_SECURE: "true"
+  SHAREPOINT_ROOT_FOLDER: "PROD/"
+  SITE_URL: "REPLACE_WITH_REAL_VALUE"
+  AZURE_TENANT_ID: "REPLACE_WITH_REAL_VALUE"
+  AZURE_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  AZURE_SHAREPOINT_SITE_ID: "REPLACE_WITH_REAL_VALUE"
+  AZURE_SHAREPOINT_DRIVE_ID: "REPLACE_WITH_REAL_VALUE"
+  APP_CLOUD_STORAGE: "SHAREPOINT"
+  AWS_S3_REGION: "us-east-1"
+  AWS_S3_BUCKET_NAME: "REPLACE_WITH_REAL_VALUE"
+  CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  SITE_ID: "REPLACE_WITH_REAL_VALUE"
+  DRIVE_ID: "REPLACE_WITH_REAL_VALUE"
+  TENANT_ID: "REPLACE_WITH_REAL_VALUE"
+  FILE_PATH: "Shared Documents/BACKUP"
+  MICROSOFT_OAUTH_TOKEN_URL: "REPLACE_WITH_REAL_VALUE"   # https://login.microsoftonline.com/<RIFAST tenant>/oauth2/v2.0/token
+  CRITICALITITY_ID: "REPLACE_WITH_REAL_VALUE_OR_CONFIRM_NOT_APPLICABLE"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  MODEL_TYPE: "3b"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  data:
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    DATABASE_USERNAME: "rifast-app-database-user"
+    AWS_ACCESS_KEY_ID: "rifast-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "rifast-aws-secret-access-key"
+    EMAIL_USER: "rifast-email-user"
+    EMAIL_PASSWORD: "rifast-email-password"
+    EMAIL_FROM: "rifast-email-from"
+    AWS_S3_ACCESS_ID: "rifast-aws-s3-access-id"
+    AWS_S3_ACCESS_KEY: "rifast-aws-s3-access-key"
+    AZURE_CLIENT_SECRET: "rifast-azure-client-secret"
+    CLIENT_SECRET: "rifast-client-secret"
+    DNB_KEY: "rifast-dnb-key"
+    DNB_SECRET: "rifast-dnb-secret"

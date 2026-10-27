@@ -1,0 +1,102 @@
+{{- /*
+  The notifier process of the same image (workflow-management-service) as
+  this chart's worker and API Deployments - see values.yaml's top-of-file
+  comment ("one image, three processes"). Added 2026-10-20, confirmed by
+  the dev team (Dinesh Kumar M). Same pattern as api-deployment.yaml: same
+  image/tag (always in lockstep with the worker, never a separate build),
+  same ConfigMap/Secret, same namespace - only command/port/resources
+  differ.
+
+  Deliberately NO Service, NO Ingress - unlike the API, the notifier takes
+  zero inbound traffic (not even for Prometheus, unlike the worker's
+  optional metrics port). Kubelet probes containerPort 3012 directly.
+
+  HEALTH_PORT override: the shared configApp ConfigMap sets HEALTH_PORT to
+  "3011" (the worker's own value) - the notifier needs "3012" instead. A
+  container-level `env:` entry takes precedence over the same-named key
+  from `envFrom` (Kubernetes env var precedence rule), so this overrides it
+  here without touching the shared ConfigMap or breaking the worker's own
+  HEALTH_PORT.
+
+  Pod labels are deliberately distinct (app: {{ .Release.Name }}-notifier)
+  - three Deployments in one namespace must not share a pod selector.
+
+  Probes gated by notifier.probes.enabled (default false) - confirmed live
+  2026-10-20: image 1.0.0-50's notifier process is a bare polling loop with
+  no HTTP server at all on 3012 ("connection refused", not a failed health
+  check) - contradicts the dev team's README description, which likely
+  describes the target design rather than this specific build. With probes
+  on, the liveness probe killed the container every ~30s before it could
+  even keep retrying past its real (separate) missing-table error. Flip
+  back to true once a build that actually serves /health/live and
+  /health/ready on 3012 is confirmed.
+*/}}
+{{- if .Values.notifier.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quoteplus.name" . }}-notifier
+  labels:
+    app: {{ .Release.Name }}-notifier
+    app.kubernetes.io/name: {{ .Release.Name }}-notifier
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: {{ .Values.notifier.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-notifier
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-notifier
+      annotations:
+        checksum/config: {{ toYaml .Values.configApp | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.notifier.terminationGracePeriodSeconds }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ include "quoteplus.name" . }}-notifier
+          image: {{ include "quoteplus.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ toYaml .Values.notifier.command | nindent 12 }}
+          env:
+            - name: HEALTH_PORT
+              value: {{ .Values.notifier.healthPort | quote }}
+          ports:
+            - name: health
+              containerPort: {{ .Values.notifier.healthPort }}
+          envFrom:
+            {{- range .Values.envFrom.configMaps }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+            {{- range .Values.envFrom.secrets }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          {{- if .Values.notifier.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ required "notifier.probes.liveness.path is required" .Values.notifier.probes.liveness.path }}
+              port: {{ .Values.notifier.healthPort }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ required "notifier.probes.readiness.path is required" .Values.notifier.probes.readiness.path }}
+              port: {{ .Values.notifier.healthPort }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          {{- end }}
+          resources:
+            {{- toYaml .Values.notifier.resources | nindent 12 }}
+{{- end }}

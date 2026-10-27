@@ -1,0 +1,44 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-report-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.report.mindcaninc.com"
+
+configApp:
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  AWS_REGION: "us-east-1"
+  AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
+  PUBLIC_AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
+  EMAIL_HOST: "smtp-mail.outlook.com"
+  EMAIL_PORT: "587"
+  EMAIL_SECURE: "true"
+  MDM_URL: "https://rifast-quoteplus.mdm.mindcaninc.com"
+  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com"
+  FRAMEWORK_URL: "https://rifast-quoteplus.framework.mindcaninc.com"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  USER_DETAILS_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  data:
+    DATABASE_USERNAME: "rifast-app-database-user"
+    DATABASE_USER_NAME: "rifast-app-database-user"
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    AWS_ACCESS_KEY_ID: "rifast-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "rifast-aws-secret-access-key"
+    EMAIL_USER: "rifast-email-user"
+    EMAIL_FROM: "rifast-email-from"
+    EMAIL_PASSWORD: "rifast-email-password"

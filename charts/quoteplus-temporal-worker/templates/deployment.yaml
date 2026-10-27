@@ -1,0 +1,91 @@
+{{- /*
+  No Service or Ingress - this worker only polls Temporal's frontend, it
+  doesn't accept inbound traffic (see docs/temporal-setup-plan.md
+  Architecture). Port 3011 (HEALTH_PORT) exists only for kubelet's own
+  probes, confirmed from the dev team's worker code + ops runbook
+  (2026-09-30) - "health endpoints added" commit on MNC_QUOTE_REPO's dev
+  branch. Every value pulled via `required` below is QTP-867's Q7; probes
+  are now real, resources/replicaCount were already confirmed, DB
+  credentials and SERVICE_TOKEN are still open - see values.yaml.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quoteplus.name" . }}
+  labels:
+    {{- include "quoteplus.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quoteplus.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quoteplus.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ toYaml .Values.configApp | sha256sum }}
+    spec:
+      # The worker keeps polling until in-flight activities/workflow tasks
+      # finish after SIGTERM - matches the dev team's ops runbook (60s).
+      terminationGracePeriodSeconds: 60
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ include "quoteplus.name" . }}
+          image: {{ include "quoteplus.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: health
+              containerPort: {{ .Values.probes.port }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+            {{- end }}
+          envFrom:
+            {{- range .Values.envFrom.configMaps }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+            {{- range .Values.envFrom.secrets }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          # startupProbe gates liveness/readiness until the worker has had
+          # time to bundle its workflow code and connect (10-30s observed,
+          # dev team's ops runbook allows 60s: periodSeconds 5 * failureThreshold 12).
+          startupProbe:
+            httpGet:
+              path: {{ required "probes.liveness.path is required (QTP-867 Q7)" .Values.probes.liveness.path }}
+              port: {{ required "probes.port is required (QTP-867 Q7)" .Values.probes.port }}
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: {{ required "probes.liveness.path is required (QTP-867 Q7)" .Values.probes.liveness.path }}
+              port: {{ required "probes.port is required (QTP-867 Q7)" .Values.probes.port }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ required "probes.readiness.path is required (QTP-867 Q7) - must only report OK once connected to Temporal and polling its task queue" .Values.probes.readiness.path }}
+              port: {{ required "probes.port is required (QTP-867 Q7)" .Values.probes.port }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: {{ required "resources.requests.cpu is required (QTP-867 Q7) - not yet answered by the dev team" .Values.resources.requests.cpu }}
+              memory: {{ required "resources.requests.memory is required (QTP-867 Q7) - not yet answered by the dev team" .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ required "resources.limits.cpu is required (QTP-867 Q7) - not yet answered by the dev team" .Values.resources.limits.cpu }}
+              memory: {{ required "resources.limits.memory is required (QTP-867 Q7) - not yet answered by the dev team" .Values.resources.limits.memory }}

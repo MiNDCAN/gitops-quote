@@ -1,0 +1,24 @@
+ingress:
+  host: "rifast-quoteplus.pgadmin.mindcaninc.com"
+
+# dbServer.host is in-cluster Service DNS, same everywhere - not overridden.
+# maintenanceDb/username must match quoteplus-postgres.yaml's database/
+# POSTGRES_USER for RIFAST, not stage's customerdemo values.
+dbServer:
+  name: "RIFAST Production - App DB"
+  maintenanceDb: "quoteplus"
+  username: "REPLACE_WITH_REAL_VALUE"   # must match quoteplus-postgres.yaml's POSTGRES_USER
+
+# Internal login only, same as stage - SSO via Keycloak once a pgadmin
+# client exists in RIFAST's production realm.
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  data:
+    PGADMIN_DEFAULT_EMAIL: "rifast-pgadmin-default-email"
+    PGADMIN_DEFAULT_PASSWORD: "rifast-pgadmin-default-password"

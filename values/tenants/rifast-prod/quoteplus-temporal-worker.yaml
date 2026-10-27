@@ -1,0 +1,43 @@
+# RIFAST overrides for quoteplus-temporal-worker. image.tag must stay an
+# active/uncommented key - Jenkins's tag-writer does blind text
+# substitution, not real YAML editing (see gitops-quote-mrea/CLAUDE.md).
+# No RIFAST-specific Jenkins stage exists yet.
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-temporal-worker-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - CI-owned, no Jenkins stage yet
+
+api:
+  ingress:
+    host: "rifast-quoteplus.workflow-api.mindcaninc.com"
+
+# Base chart hardcodes these to stage's external domain - overridden here.
+# NOTIFICATION_API_URL is NOT overridden - it's in-cluster Service DNS
+# (quotemanagement-service.svc.cluster.local), identical across every
+# customer's own cluster, same namespace naming convention.
+configApp:
+  USER_DETAILS_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+  QUOTE_SERVICE_GRAPHQL_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
+
+workloadIdentity:
+  enabled: true
+
+secrets: {}
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # DATABASE_* reuses the app DB credentials (same pattern as stage, per
+  # the dev team's ops runbook) - same Key Vault secret as
+  # quoteplus-management-service.yaml's DATABASE_PASSWORD etc. below.
+  # KEYCLOAK_CLIENT_SECRET is the same qtplus_admin-equivalent client used
+  # by every RIFAST service, once the production realm exists.
+  # SERVICE_TOKEN stays a placeholder - quote-management-service has no
+  # bearer/token validation (confirmed for stage's code; re-confirm for
+  # whatever build RIFAST runs), so a real value is currently a no-op.
+  data:
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_USER_NAME: "rifast-app-database-user"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    SERVICE_TOKEN: "rifast-service-token-placeholder"
+    KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
+    INTERNAL_API_KEY: "rifast-internal-api-key"

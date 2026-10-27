@@ -1,0 +1,5 @@
+apiVersion: v2
+name: quoteplus-cluster-issuer
+description: QuotePlus - cert-manager ClusterIssuer (separate chart so it syncs after the CRDs exist)
+type: application
+version: 0.1.0

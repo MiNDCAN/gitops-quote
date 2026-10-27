@@ -1,0 +1,5 @@
+apiVersion: v2
+name: quoteplus-promtail
+description: QuotePlus - promtail log shipping, hand-rolled to match the real dev environment's deployment (DaemonSet/ConfigMap/RBAC), adapted for containerd on AKS instead of the upstream grafana/promtail chart
+type: application
+version: 0.1.0

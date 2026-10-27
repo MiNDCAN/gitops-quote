@@ -1,0 +1,10 @@
+apiVersion: v2
+name: quoteplus-external-secrets
+description: QuotePlus production - External Secrets Operator + per-namespace workload identity
+type: application
+version: 0.1.0
+dependencies:
+  - name: external-secrets
+    version: "0.10.4"
+    repository: https://charts.external-secrets.io
+    alias: external-secrets

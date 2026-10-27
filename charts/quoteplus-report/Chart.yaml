@@ -1,0 +1,6 @@
+apiVersion: v2
+name: quoteplus-report
+description: QuotePlus - report service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

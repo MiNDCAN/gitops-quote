@@ -1,0 +1,20 @@
+# Must match QUOTE_INFRA/terraform/stage/workload_identity.tf's
+# workload_identity_namespaces list exactly.
+namespaces:
+  - quote-frontend
+  - quote-framework
+  - quote-mdmservice
+  - quote-res-mdm
+  - quote-report
+  - quote-supplier
+  - quote-user-management
+  - quote-customer-management
+  - quote-language
+  - quotemanagement-service
+  - quote-distribution-list
+  - quote-metabase
+  - quote-redis
+  - quote-postgres
+  - quote-pgadmin
+  - quote-temporal
+  - quote-temporal-worker

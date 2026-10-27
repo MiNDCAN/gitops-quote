@@ -1,0 +1,22 @@
+# The AWS cluster runs redis:latest behind a public LoadBalancer on 6379.
+# Deliberately not replicated as-is here:
+#   - pinned tag instead of :latest, same reasoning as gitops-mrea's stance on
+#     mutable tags (untracked running digest)
+#   - ClusterIP instead of a public LoadBalancer, per the decision to keep
+#     Redis internal-only on this cluster
+# No persistence: matches what's actually running on AWS (no PVC observed),
+# it's a cache, not a store of record.
+
+image:
+  repository: redis
+  tag: "7.2"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 6379
+  targetPort: 6379
+
+resources:
+  requests: { cpu: "100m", memory: "128Mi" }
+  limits:   { cpu: "250m", memory: "256Mi" }

@@ -1,0 +1,129 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: quoteplus-rifast-prod
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    customer: rifast
+    environment: production
+    type: project
+  annotations:
+    argocd.argoproj.io/description: "QuotePlus - RIFAST dedicated production environment on aks-rifast-prod, driven by MiNDCAN/gitops-quote@production"
+spec:
+  description: "QuotePlus - RIFAST dedicated production environment, one namespace per microservice"
+
+  sourceRepos:
+    - https://github.com/MiNDCAN/gitops-quote.git
+    - https://kubernetes.github.io/ingress-nginx
+    - https://charts.jetstack.io
+    - https://go.temporal.io/helm-charts
+    - https://charts.external-secrets.io
+
+  # Scoped to RIFAST's own quote-* namespaces only. Deliberately NOT '*'/'*':
+  # this project shares an ArgoCD hub with the MREA and ProfitPlus fleets
+  # (and, soon, other QuotePlus production customers) - an over-broad
+  # destination is the only thing standing between a mis-templated
+  # namespace and a different customer's cluster.
+  destinations:
+    - namespace: quote-frontend
+      server: '*'
+    - namespace: quote-framework
+      server: '*'
+    - namespace: quote-mdmservice
+      server: '*'
+    - namespace: quote-res-mdm
+      server: '*'
+    - namespace: quote-report
+      server: '*'
+    - namespace: quote-supplier
+      server: '*'
+    - namespace: quote-user-management
+      server: '*'
+    - namespace: quote-customer-management
+      server: '*'
+    - namespace: quote-language
+      server: '*'
+    - namespace: quotemanagement-service
+      server: '*'
+    - namespace: quote-distribution-list
+      server: '*'
+    - namespace: quote-redis
+      server: '*'
+    - namespace: quote-postgres
+      server: '*'
+    - namespace: quote-pgadmin
+      server: '*'
+    - namespace: quote-temporal
+      server: '*'
+    - namespace: quote-temporal-worker
+      server: '*'
+    - namespace: quote-external-secrets
+      server: '*'
+    - namespace: quoteplus-system
+      server: '*'
+    - namespace: ingress-nginx
+      server: '*'
+    - namespace: cert-manager
+      server: '*'
+    - namespace: promtail
+      server: '*'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'networking.k8s.io'
+      kind: IngressClass
+    - group: 'admissionregistration.k8s.io'
+      kind: ValidatingWebhookConfiguration
+    - group: 'admissionregistration.k8s.io'
+      kind: MutatingWebhookConfiguration
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'cert-manager.io'
+      kind: ClusterIssuer
+    - group: 'storage.k8s.io'
+      kind: StorageClass
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: Deployment
+    - group: 'apps'
+      kind: StatefulSet
+    - group: 'apps'
+      kind: DaemonSet
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: ServiceAccount
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: 'networking.k8s.io'
+      kind: Ingress
+    - group: 'networking.k8s.io'
+      kind: NetworkPolicy
+    - group: 'rbac.authorization.k8s.io'
+      kind: Role
+    - group: 'rbac.authorization.k8s.io'
+      kind: RoleBinding
+    - group: 'policy'
+      kind: PodDisruptionBudget
+    - group: 'autoscaling'
+      kind: HorizontalPodAutoscaler
+    - group: 'batch'
+      kind: Job
+    - group: 'batch'
+      kind: CronJob
+    - group: 'external-secrets.io'
+      kind: ExternalSecret
+    - group: 'external-secrets.io'
+      kind: SecretStore

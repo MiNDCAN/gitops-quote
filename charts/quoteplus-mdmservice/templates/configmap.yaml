@@ -1,0 +1,12 @@
+{{- if .Values.configApp }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "quoteplus.name" . }}-configmap
+  labels:
+    {{- include "quoteplus.labels" . | nindent 4 }}
+data:
+  {{- range $k, $v := .Values.configApp }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,29 @@
+{{- /*
+  Pre-populates one server entry via pgAdmin's PGADMIN_SERVER_JSON_FILE
+  mechanism (imported into pgAdmin's internal storage on first container
+  start only - editing this later won't change an already-initialized
+  pgAdmin PVC). Non-secret (no password here), so a ConfigMap not a Secret.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-servers
+  labels:
+    app: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": {{ .Values.dbServer.name | quote }},
+          "Group": "Servers",
+          "Host": {{ .Values.dbServer.host | quote }},
+          "Port": {{ .Values.dbServer.port }},
+          "MaintenanceDB": {{ .Values.dbServer.maintenanceDb | quote }},
+          "Username": {{ .Values.dbServer.username | quote }},
+          "SSLMode": "prefer"
+        }
+      }
+    }

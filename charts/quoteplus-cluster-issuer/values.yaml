@@ -1,0 +1,5 @@
+name: quoteplus-letsencrypt-prod
+acme:
+  server: https://acme-v02.api.letsencrypt.org/directory
+  email: ""            # REQUIRED - set in values/shared/quoteplus-cluster-issuer.yaml
+  ingressClassName: nginx

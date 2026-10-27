@@ -1,0 +1,34 @@
+# Scaffold - real values live in values/tenants/<customer>-prod/quoteplus-external-secrets.yaml
+# (vaultUrl/clientId/tenantId come from that customer's own Terraform outputs
+# in QUOTE_AZURE_INFRA/terraform/tenants/<customer>-prod/ - workload
+# identities don't cross clusters, so every customer gets its own).
+
+external-secrets:
+  installCRDs: true
+  replicaCount: 1
+  serviceAccount:
+    create: true
+    name: external-secrets
+  podLabels:
+    azure.workload.identity/use: "true"
+
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+  storeName: quoteplus-azure-keyvault
+  vaultUrl: ""
+  clientId: ""
+  tenantId: ""
+  namespaces: []
+
+# Nexus image-pull credential, sourced from Key Vault rather than committed -
+# unlike charts/quoteplus-nexus-pull-secret in gitops-quote-mrea, which
+# commits the dockerconfigjson directly as a documented stage-only shortcut
+# (see that repo's CLAUDE.md "Secrets" section). This repo is production,
+# public, and holds a real paying customer's infrastructure, so that
+# shortcut isn't repeated here.
+nexusPullSecret:
+  enabled: false
+  name: quoteplus-nexus-secrets
+  refreshInterval: 1h
+  keyVaultKey: quoteplus-nexus-dockerconfigjson

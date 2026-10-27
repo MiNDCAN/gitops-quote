@@ -1,0 +1,45 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-framework-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.framework.mindcaninc.com"
+
+# DATABASE_HOST/PORT/DB_SCHEMA are in-cluster, same as every environment.
+# Everything else below depends on RIFAST's own Azure AD/SharePoint/Keycloak
+# setup, not mindcaninc's - REPLACE_WITH_REAL_VALUE throughout, do not reuse
+# stage's test tenant values.
+configApp:
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  MAX_WORKERS: "8"
+  LOG_LEVEL: "INFO"
+  NOTIFICATION_API_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
+  SHAREPOINT_SCOPE: "https://graph.microsoft.com/.default"
+  SHAREPOINT_SITE_ID: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  USER_MANAGEMENT_SERVICE_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+  APPLICATION_ID: "QP"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  data:
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_USER_NAME: "rifast-app-database-user"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    SUPPORT_EMAIL: "rifast-support-email"
+    AZURE_CLIENT_ID: "rifast-azure-client-id"
+    AZURE_TENANT_ID: "rifast-azure-tenant-id"
+    AZURE_CLIENT_SECRET: "rifast-azure-client-secret"
+    KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"

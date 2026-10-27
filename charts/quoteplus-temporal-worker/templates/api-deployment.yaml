@@ -1,0 +1,87 @@
+{{- /*
+  The API process of the same image (workflow-management-service) that this
+  chart's main deployment.yaml runs as the worker - see values.yaml's
+  top-of-file comment ("one image, three processes, selected by container
+  command"). Added 2026-10-20 on explicit request so the dev team can reach
+  it directly, guarded by api.enabled so it can be turned off without
+  removing the block. Deliberately NOT a separate chart/Application: same
+  image (always .Values.image.repository/tag, kept in lockstep with the
+  worker rather than drifting), same ConfigMap/Secret (.Values.envFrom,
+  defined once for both), same namespace - only the command, port and
+  replica count differ, matching "the worker must be able to restart
+  without taking the API down, and to scale independently" from the
+  Dockerfile's own comment.
+
+  Probes confirmed by the dev team 2026-10-20 (Dinesh Kumar M): the API
+  serves /health/live and /health/ready on its own traffic port (3010, no
+  separate probe port like the worker's 3011) - same paths/shape as the
+  worker's probes, just one port instead of two.
+
+  Pod labels are deliberately distinct (app: {{ .Release.Name }}-api, not
+  the shared "quoteplus.selectorLabels") - two Deployments in one namespace
+  must not share a pod selector, or they fight over owning each other's
+  pods.
+*/}}
+{{- if .Values.api.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quoteplus.name" . }}-api
+  labels:
+    app: {{ .Release.Name }}-api
+    app.kubernetes.io/name: {{ .Release.Name }}-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+      annotations:
+        checksum/config: {{ toYaml .Values.configApp | sha256sum }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ include "quoteplus.name" . }}-api
+          image: {{ include "quoteplus.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ toYaml .Values.api.command | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.api.service.targetPort }}
+          envFrom:
+            {{- range .Values.envFrom.configMaps }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+            {{- range .Values.envFrom.secrets }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ required "api.probes.liveness.path is required" .Values.api.probes.liveness.path }}
+              port: {{ .Values.api.service.targetPort }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ required "api.probes.readiness.path is required" .Values.api.probes.readiness.path }}
+              port: {{ .Values.api.service.targetPort }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+{{- end }}

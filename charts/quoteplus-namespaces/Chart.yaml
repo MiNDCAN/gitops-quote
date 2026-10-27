@@ -1,0 +1,5 @@
+apiVersion: v2
+name: quoteplus-namespaces
+description: QuotePlus - the 12 app/data namespaces, created ahead of both the Nexus pull secret fan-out and the app charts (whose CreateNamespace=true can't fire until image.tag exists)
+type: application
+version: 0.1.0

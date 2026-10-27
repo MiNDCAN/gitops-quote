@@ -1,0 +1,46 @@
+# Dedicated Postgres for Temporal (QTP-867) - deliberately separate from
+# charts/quoteplus-postgres (the app's own instance). Same pod/StatefulSet
+# shape (copied from that chart), different namespace (quote-temporal),
+# different PVC, never shares a role or a Service with the app DB. The
+# instance's own POSTGRES_USER is its own superuser - no app credential is
+# ever touched to create it or the Temporal role.
+
+image:
+  repository: postgres
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 5432
+
+# initdb only creates one database (POSTGRES_DB). `temporal_visibility` is
+# a second, manual `CREATE DATABASE temporal_visibility;` after first boot -
+# one-off, run as this instance's own POSTGRES_USER (see CLAUDE.md).
+database: "temporal"
+
+storage:
+  size: 10Gi
+  storageClassName: managed-csi
+
+resources:
+  requests: { cpu: "100m", memory: "256Mi" }
+  limits:   { cpu: "500m", memory: "1Gi" }
+
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}
+
+# POSTGRES_USER / POSTGRES_PASSWORD committed directly per-environment -
+# not Key Vault backed. Real values in
+# values/tenants/quoteplus-stage/quoteplus-temporal-postgres.yaml.
+secrets: {}

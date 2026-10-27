@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quoteplus-projects-root
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    type: root-application
+    purpose: project-management
+  annotations:
+    argocd.argoproj.io/description: "Root application managing QuotePlus production customer AppProjects from MiNDCAN/gitops-quote@main. Apply once per hub via 'kubectl apply -f'. Tracks main deliberately, not production - this manages AppProject/ApplicationSet DEFINITIONS (which cluster/project a customer's apps point at), not the chart/values content those generated Applications sync (that's targetRevision: production, set per-ApplicationSet-template in apps/applicationsets/)."
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MiNDCAN/gitops-quote.git
+    targetRevision: main
+    path: projects
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

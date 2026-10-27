@@ -1,0 +1,70 @@
+# pgAdmin4 for developer access to quote-postgres. Deliberately NOT
+# exposed via a public LoadBalancer/NodePort on Postgres itself - same
+# principle as CLAUDE.md's Redis section (public DB exposure is a problem
+# to avoid, not a pattern to replicate). Only pgAdmin's own web UI (with
+# its own login) is internet-reachable, over the same ingress-nginx +
+# cert-manager path every other service uses. Postgres itself stays
+# ClusterIP-only.
+
+image:
+  repository: dpage/pgadmin4
+  tag: "9.17"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 80
+  targetPort: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+  host: "stage-quoteplus.pgadmin.mindcaninc.com"
+  annotations:
+    cert-manager.io/cluster-issuer: quoteplus-letsencrypt-prod
+  tls:
+    enabled: true
+    secretName: quoteplus-pgadmin-tls
+
+storage:
+  size: 5Gi
+  storageClassName: managed-csi
+
+resources:
+  requests: { cpu: "100m", memory: "256Mi" }
+  limits:   { cpu: "500m", memory: "512Mi" }
+
+# Pre-populates the "QuotePlus Stage - App DB" server entry on first
+# container start (pgAdmin's PGADMIN_SERVER_JSON_FILE mechanism) so a
+# developer doesn't have to hand-type the host/port/user. Password
+# deliberately left out of servers.json - typed once per pgAdmin login
+# session rather than stored a second time inside pgAdmin's own SQLite
+# config DB on top of the Secret below.
+dbServer:
+  name: "QuotePlus Stage - App DB"
+  host: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  port: 5432
+  maintenanceDb: "mnc_quoteplus_customerdemo"
+  username: "quotepluscustuser01"
+
+# pgAdmin's OWN login (not the Postgres DB password) - real value
+# committed directly per this repo's current secrets policy, see
+# CLAUDE.md. SSO via Keycloak is a planned follow-up: internal auth stays
+# enabled as a fallback once that's added, not replaced by it.
+secrets:
+  PGADMIN_DEFAULT_EMAIL: "REPLACE_WITH_REAL_VALUE"
+  PGADMIN_DEFAULT_PASSWORD: "REPLACE_WITH_REAL_VALUE"
+
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}

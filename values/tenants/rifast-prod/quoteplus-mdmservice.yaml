@@ -1,0 +1,54 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-mdm-service-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.mdm.mindcaninc.com"
+
+configApp:
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  AWS_REGION: "us-east-1"
+  AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
+  PUBLIC_AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
+  EMAIL_HOST: "smtp-mail.outlook.com"
+  EMAIL_PORT: "587"
+  EMAIL_SECURE: "true"
+  # LIMANS is stage's internal martinrea.com integration (apps.martinrea.com) -
+  # almost certainly NOT applicable to RIFAST, a separate customer. Confirm
+  # with the dev team whether this feature applies here at all before
+  # filling these in; left as placeholders rather than assumed-needed.
+  LIMANS_API_ID: "REPLACE_WITH_REAL_VALUE_OR_CONFIRM_NOT_APPLICABLE"
+  LIMANS_URL: "REPLACE_WITH_REAL_VALUE_OR_CONFIRM_NOT_APPLICABLE"
+  QUOTE_SERVICE_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
+  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # DATABASE_USER_NAME duplicates DATABASE_USERNAME on purpose - mdm-
+  # service's own code reads the former (a confirmed typo vs. other
+  # services, see gitops-quote-mrea's equivalent file for the live-
+  # confirmed error this works around).
+  data:
+    DATABASE_USERNAME: "rifast-app-database-user"
+    DATABASE_USER_NAME: "rifast-app-database-user"
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    AWS_ACCESS_KEY_ID: "rifast-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "rifast-aws-secret-access-key"
+    EMAIL_USER: "rifast-email-user"
+    EMAIL_FROM: "rifast-email-from"
+    EMAIL_PASSWORD: "rifast-email-password"
+    LIMANS_API_KEY: "rifast-limans-api-key-or-confirm-not-applicable"
+    LIMANS_TOKEN: "rifast-limans-token-or-confirm-not-applicable"

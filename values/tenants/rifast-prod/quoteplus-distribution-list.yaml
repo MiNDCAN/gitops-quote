@@ -1,0 +1,53 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-distribution-list-service-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.distribution-list.mindcaninc.com"
+
+configApp:
+  QP_KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  QP_KEYCLOAK_CLIENT_UUID: ""
+  QP_KEYCLOAK_WEB_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  VALID_APPLICATIONIDS: "QP"
+  QP_APP_REDIRECT_URL: "https://rifast-quoteplus.mindcaninc.com/"
+  MAGIC_LINK_EXPIRE_TIME: "2700"
+  USERS_API_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+  USER_DETAILS_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  MDM_URL: "https://rifast-quoteplus.mdm.mindcaninc.com"
+  REDIS_HOST: "quoteplus-redis-service.quote-redis.svc.cluster.local"
+  REDIS_PORT: "6379"
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  EMAIL_HOST: "smtp-mail.outlook.com"
+  EMAIL_PORT: "587"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # QP_KEYCLOAK_CLIENT_SECRET and KEYCLOAK_CLIENT_SECRET should be the SAME
+  # Keycloak client once RIFAST's realm exists - same Key Vault secret name,
+  # not two different values (matches stage's own resolved convention).
+  data:
+    QP_KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
+    KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
+    REDIS_PASSWORD: "rifast-redis-password-noop"
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_USER_NAME: "rifast-app-database-user"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    EMAIL_USER: "rifast-email-user"
+    EMAIL_PASSWORD: "rifast-email-password"
+    EMAIL_FROM: "rifast-email-from"

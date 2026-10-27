@@ -1,0 +1,65 @@
+# Defaults for quoteplus-report. Per-environment overrides live in
+# values/tenants/<env>/quoteplus-report.yaml.
+
+replicaCount: 1
+env: ""
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus/quoteplus-report
+  tag: ""                       # REQUIRED - the chart fails to render if unset
+  pullPolicy: IfNotPresent
+  pullSecrets: [quoteplus-nexus-secrets]
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 3007              # matches the AWS container port
+
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+  host: ""                      # set per environment
+  annotations:
+    cert-manager.io/cluster-issuer: quoteplus-letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+  tls:
+    enabled: true
+    secretName: quoteplus-report-tls
+
+# Workload identity was only ever needed for Key Vault access via ESO -
+# disabled now that secrets are committed directly, see CLAUDE.md.
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}
+
+envFrom:
+  configMaps:
+    - quoteplus-report-configmap
+  secrets:
+    - quoteplus-report-secrets
+
+# AWS cluster's report-secrets has 8 keys not individually inspected by the
+# read-only scan - confirm the full key list before filling
+# values/tenants/<env>/quoteplus-report.yaml.
+configApp: {}
+
+# Real secret values committed directly per-environment - not Key Vault
+# backed.
+secrets: {}
+
+resources:
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits:   { cpu: "500m", memory: "1Gi" }

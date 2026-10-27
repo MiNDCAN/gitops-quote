@@ -1,0 +1,5 @@
+apiVersion: v2
+name: quoteplus-postgres
+description: QuotePlus - general-purpose app Postgres (separate from quoteplus-metabase's own Postgres)
+type: application
+version: 0.1.0

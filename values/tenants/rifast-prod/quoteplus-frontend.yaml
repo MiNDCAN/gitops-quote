@@ -1,0 +1,22 @@
+env: rifast-prod
+
+# image.tag must stay an active/uncommented key - Jenkins's tag-writer does
+# a blind text substitution, not real YAML editing (see
+# gitops-quote-mrea/CLAUDE.md's equivalent note). CI (a new Jenkins stage
+# pointed at this file) owns this - do not hand-edit outside a rollback.
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-frontend-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage exists yet
+
+ingress:
+  host: "rifast-quoteplus.mindcaninc.com"
+
+# REACT_APP_* values are baked in at build time, not read at runtime - same
+# as stage, see gitops-quote-mrea's quoteplus-frontend.yaml for the full
+# reasoning. configApp/secrets intentionally empty.
+configApp: {}
+secrets: {}
+
+envFrom:
+  configMaps: []
+  secrets: []

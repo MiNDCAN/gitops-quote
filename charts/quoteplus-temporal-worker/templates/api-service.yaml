@@ -1,0 +1,21 @@
+{{- if and .Values.api.enabled .Values.api.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "quoteplus.name" . }}-api-service
+  labels:
+    app: {{ .Release.Name }}-api
+    app.kubernetes.io/name: {{ .Release.Name }}-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: {{ .Values.api.service.type }}
+  selector:
+    app: {{ .Release.Name }}-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.api.service.port }}
+      targetPort: {{ .Values.api.service.targetPort }}
+{{- end }}

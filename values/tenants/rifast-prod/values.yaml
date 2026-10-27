@@ -1,0 +1,14 @@
+# Environment facts. Not consumed by a matrix generator - quoteplus-apps.yaml
+# and quoteplus-platform.yaml in this repo are flat list generators, one
+# per customer folder (same reasoning gitops-quote-mrea used for its own
+# single environment).
+env:
+  name: rifast-prod
+  # The ArgoCD cluster NAME as registered on the mindcan-common hub.
+  # Case-sensitive and must match exactly what `argocd cluster add` used.
+  argocdCluster: aks-rifast-prod
+  baseDomain: "mindcaninc.com"
+  # rifast-quoteplus.<service>.mindcaninc.com for 16 services,
+  # rifast-quoteplus.mindcaninc.com for frontend (no subdomain segment) -
+  # same pattern as gitops-quote-mrea's stage-quoteplus.* convention.
+  hostPrefix: "rifast-quoteplus"

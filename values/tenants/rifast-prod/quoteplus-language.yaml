@@ -1,0 +1,28 @@
+env: rifast-prod
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-language-dev
+  tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
+
+ingress:
+  host: "rifast-quoteplus.language.mindcaninc.com"
+
+configApp:
+  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DB_SCHEMA: "public"
+  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  data:
+    DATABASE_NAME: "rifast-app-database-name"
+    DATABASE_PASSWORD: "rifast-app-database-password"
+    DATABASE_USER_NAME: "rifast-app-database-user"

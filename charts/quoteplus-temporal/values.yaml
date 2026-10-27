@@ -1,0 +1,145 @@
+# Temporal server + Web UI for quoteplus-stage (QTP-867). Wraps the upstream
+# temporalio/temporal chart (https://go.temporal.io/helm-charts, pinned
+# 1.7.0) - see docs/temporal-setup-plan.md for the full plan. Per CLAUDE.md,
+# nothing is copied from gitops-mrea's mrea-temporal chart; every value here
+# is written from scratch against the upstream chart's own values.yaml.
+#
+# Bundled datastores (cassandra/elasticsearch/mysql/postgresql) and
+# prometheus/grafana subcharts were removed from the upstream chart in
+# v1.0.0-rc.2 - as of 1.7.0 those top-level keys don't exist any more and
+# even an `enabled: false` map trips the chart's own validateDeprecations
+# check (charts/temporal/templates/_deprecations.tpl: presence alone is
+# truthy). Don't add them back - this uses charts/quoteplus-temporal-postgres,
+# a DEDICATED Postgres pod for Temporal (its own StatefulSet, PVC, Service,
+# in quote-temporal), not the app's shared quoteplus-postgres. Deliberate
+# choice (2026-09-30): the app DB is never touched by anything in this chart.
+# `temporal` (the primary DB) is created automatically at that pod's initdb;
+# `temporal_visibility` is one manual `CREATE DATABASE` after first boot,
+# run as that pod's own dedicated superuser - see CLAUDE.md.
+temporal:
+  server:
+    # 1 replica per server service (frontend/history/matching/worker) -
+    # server.replicaCount is a shared default the chart applies to each
+    # unless a service sets its own, matching the plan's "modest resources,
+    # 1 replica each" for stage.
+    replicaCount: 1
+    image:
+      tag: "1.32.0"
+    config:
+      persistence:
+        defaultStore: default
+        visibilityStore: visibility
+        # Cannot change after the first deploy - changing it later means
+        # wiping the DB. 512 matches upstream's own default.
+        numHistoryShards: 512
+        datastores:
+          default:
+            sql:
+              pluginName: postgres12
+              driverName: postgres12
+              databaseName: temporal
+              connectAddr: "quoteplus-temporal-postgres-service.quote-temporal.svc.cluster.local:5432"
+              # Required - the server binary's own config validation rejects
+              # a zero-value ConnectProtocol even though connectAddr alone
+              # renders fine and the schema Job (admin-tools) doesn't need
+              # it. Confirmed live 2026-09-30: frontend/history/matching/
+              # worker crash-looped with "ConnectProtocol: zero value" until
+              # this was added.
+              connectProtocol: "tcp"
+              user: temporal
+              # This IS the dedicated instance's own superuser (POSTGRES_USER
+              # on charts/quoteplus-temporal-postgres), not a role created
+              # inside someone else's database. createDatabase stays false
+              # because initdb already created it; manageSchema is true so
+              # the chart's own schema-setup/update Jobs own the schema.
+              createDatabase: false
+              manageSchema: true
+              existingSecret: quoteplus-temporal-secrets
+              secretKey: TEMPORAL_DB_PASSWORD
+          visibility:
+            sql:
+              pluginName: postgres12
+              driverName: postgres12
+              databaseName: temporal_visibility
+              connectAddr: "quoteplus-temporal-postgres-service.quote-temporal.svc.cluster.local:5432"
+              connectProtocol: "tcp"
+              user: temporal
+              # createDatabase stays false even though initdb did NOT create
+              # this one - it's the one manual `CREATE DATABASE` step (see
+              # CLAUDE.md), not something the schema Job is meant to create.
+              createDatabase: false
+              manageSchema: true
+              existingSecret: quoteplus-temporal-secrets
+              secretKey: TEMPORAL_DB_PASSWORD
+
+  admintools:
+    enabled: true
+    image:
+      tag: "1.32.0"
+
+  web:
+    image:
+      tag: "2.54.1"
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: quoteplus-letsencrypt-prod
+        # Keycloak's OIDC callback sets a refresh-token cookie big enough to
+        # exceed nginx-ingress's default proxy buffer - confirmed live
+        # 2026-09-30: "upstream sent too big header while reading response
+        # header from upstream" on /auth/sso/callback, surfaced to the user
+        # as a Cloudflare 502 (the backend actually returned 303 in 107ms;
+        # nginx-ingress itself rejected relaying it). Default is 4k/8k
+        # depending on platform; Keycloak's cookie needs more.
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+        nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+      # Upstream's ingress.hosts entries are "host/path" strings split on
+      # the first "/", not a host+path object - see
+      # charts/temporal/templates/web-ingress.yaml upstream.
+      hosts:
+        - "stage-quoteplus.temporal.mindcaninc.com/"
+      tls:
+        - hosts:
+            - stage-quoteplus.temporal.mindcaninc.com
+          secretName: quoteplus-temporal-ui-tls
+    additionalEnv:
+      - name: TEMPORAL_AUTH_ENABLED
+        value: "true"
+      - name: TEMPORAL_AUTH_PROVIDER_URL
+        value: "https://keycloak-nonprod.mindcaninc.com/realms/QuotePlus-Dev"
+      - name: TEMPORAL_AUTH_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_CLIENT_ID
+      - name: TEMPORAL_AUTH_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_CLIENT_SECRET
+      - name: TEMPORAL_AUTH_CALLBACK_URL
+        value: "https://stage-quoteplus.temporal.mindcaninc.com/auth/sso/callback"
+      - name: TEMPORAL_AUTH_SCOPES
+        value: "openid,profile,email"
+
+# Real values go in values/tenants/quoteplus-stage/quoteplus-temporal.yaml,
+# not here - matches every other chart's convention (base = placeholder
+# scaffold, tenant file = real value).
+secrets:
+  TEMPORAL_DB_PASSWORD: "REPLACE_WITH_REAL_VALUE"
+  TEMPORAL_AUTH_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
+  TEMPORAL_AUTH_CLIENT_SECRET: "REPLACE_WITH_REAL_VALUE"
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of the plaintext secrets: map
+# above - see templates/externalsecret.yaml, including its note on sequencing
+# risk vs. the upstream schema Job. No workloadIdentity block here: this
+# chart has no deployment.yaml of its own (all pods are the upstream
+# temporal subchart's), so there's no pod to label - only the Secret object
+# itself needs to come from Key Vault.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}

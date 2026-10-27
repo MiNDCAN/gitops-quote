@@ -1,0 +1,19 @@
+# This instance's own superuser, used by every RIFAST app service's
+# DATABASE_NAME/USERNAME/PASSWORD. Fresh database (no customerdemo test
+# data carried over) - "quoteplus" (the chart's own default) is a fine real
+# name for a from-scratch instance, not a placeholder.
+database: "quoteplus"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # POSTGRES_USER/POSTGRES_PASSWORD must exist in kv-rifast-quoteplus under
+  # these exact names before this syncs (az keyvault secret set) -
+  # REPLACE_WITH_REAL_VALUE: not yet populated.
+  data:
+    POSTGRES_USER: "rifast-postgres-user"
+    POSTGRES_PASSWORD: "rifast-postgres-password"

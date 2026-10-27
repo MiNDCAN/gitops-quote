@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: quoteplus-rifast-platform
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    customer: rifast
+    type: application-set
+    layer: platform
+  annotations:
+    argocd.argoproj.io/description: "Cluster platform for aks-rifast-prod: ingress-nginx, cert-manager, ClusterIssuer, promtail, namespaces, External Secrets Operator (Key Vault, not a committed Nexus credential - see charts/quoteplus-external-secrets)."
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          # Negative waves: all of this must exist before any workload.
+          - service: quoteplus-ingress-nginx
+            namespace: ingress-nginx
+            wave: "-20"
+          - service: quoteplus-cert-manager
+            namespace: cert-manager
+            wave: "-20"
+          # Creates the namespaces ahead of External Secrets Operator, which
+          # needs them to exist to fan its per-namespace ServiceAccount/
+          # SecretStore pair out to. The app charts' own CreateNamespace
+          # can't be relied on here since manifest generation fails before
+          # that fires until a real image.tag exists (by design).
+          - service: quoteplus-namespaces
+            namespace: quoteplus-system
+            wave: "-15"
+          # ESO + per-namespace workload identity + Key Vault-sourced Nexus
+          # pull secret - replaces gitops-quote-mrea's
+          # quoteplus-nexus-pull-secret (a plaintext dockerconfigjson, a
+          # stage-only shortcut not used in this repo).
+          - service: quoteplus-external-secrets
+            namespace: quote-external-secrets
+            wave: "-10"
+          # Cluster-scoped issuer; needs cert-manager's CRDs to exist first.
+          - service: quoteplus-cluster-issuer
+            namespace: cert-manager
+            wave: "-5"
+          - service: quoteplus-promtail
+            namespace: promtail
+            wave: "-5"
+  template:
+    metadata:
+      name: 'quoteplus-rifast-platform-{{.service}}'
+      namespace: argocd
+      labels:
+        team: quoteplus
+        solution: quoteplus
+        customer: rifast
+        type: application
+        layer: platform
+        service: '{{.service}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{.wave}}'
+    spec:
+      project: quoteplus-rifast-prod
+      destination:
+        name: aks-rifast-prod
+        namespace: '{{.namespace}}'
+      source:
+        repoURL: https://github.com/MiNDCAN/gitops-quote.git
+        # Real customer Applications track the protected production branch,
+        # not main - see this repo's own CLAUDE.md "gitops-quote branching"
+        # section. A typo here would silently have RIFAST's Applications
+        # tracking the wrong branch.
+        targetRevision: production
+        path: 'charts/{{.service}}'
+        helm:
+          releaseName: '{{.service}}'
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - '../../values/tenants/rifast-prod/{{.service}}.yaml'
+      ignoreDifferences:
+        - group: admissionregistration.k8s.io
+          kind: ValidatingWebhookConfiguration
+          jqPathExpressions:
+            - '.webhooks[]?.namespaceSelector.matchExpressions'
+        - group: admissionregistration.k8s.io
+          kind: MutatingWebhookConfiguration
+          jqPathExpressions:
+            - '.webhooks[]?.namespaceSelector.matchExpressions'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - ApplyOutOfSyncOnly=true
