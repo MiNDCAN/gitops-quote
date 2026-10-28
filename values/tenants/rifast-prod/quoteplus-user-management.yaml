@@ -25,8 +25,13 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - Keycloak values depend on RIFAST's production
-  # realm, not yet shared. REDIS_PASSWORD is a no-op either way (chart's
+  # Keycloak realm QuotePlus-Rifast created 2026-10-28 on
+  # https://keycloak.mindcaninc.com, cloned from QuotePlus-Customerdemo -
+  # rifast-keycloak-server-url/-realm/-client-id/-client-secret/-client-uuid/
+  # -web-client-id are all populated in Key Vault now.
+  # QP_KEYCLOAK_CLIENT_UUID is set to "unused" - stage's own real deployment
+  # has this field empty too (confirmed in gitops-quote-mrea), the app code
+  # doesn't actually read it. REDIS_PASSWORD is a no-op either way (chart's
   # Redis has no AUTH configured, confirmed for stage - same chart used
   # here) but kept for parity/forward-compatibility.
   data:
