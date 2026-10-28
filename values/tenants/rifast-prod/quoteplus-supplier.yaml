@@ -1,7 +1,7 @@
 env: rifast-prod
 
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-supplier-service-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-supplier-service-dev
   tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage yet
 
 ingress:
