@@ -1,0 +1,28 @@
+# RIFAST-only dedicated Metabase instance - not shared with other QuotePlus
+# production customers (explicit decision, 2026-10-28). Postgres credentials
+# below are freshly generated for this instance, not reused from the
+# existing AWS/EKS setup used as this chart's structural reference (that
+# setup's values looked like a ProfitPlus/QuotePlus credential mix-up -
+# MB_DB_USER was literally a password-shaped string and MB_DB_PASS decoded
+# to "profitmetabasedb" - flagged and avoided rather than carried forward).
+metabase:
+  image:
+    repository: metabase/metabase-enterprise
+    tag: "latest"
+
+postgres:
+  database: "quote_metabase_db"
+
+ingress:
+  host: "rifast-quoteplus.metabase.mindcaninc.com"
+
+workloadIdentity:
+  enabled: true
+
+secrets: {}
+
+externalSecret:
+  enabled: true
+  data:
+    MB_DB_USER: "rifast-metabase-db-user"
+    MB_DB_PASS: "rifast-metabase-db-password"

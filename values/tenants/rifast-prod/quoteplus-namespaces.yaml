@@ -22,4 +22,5 @@ namespaces:
   - quote-pgadmin
   - quote-temporal
   - quote-temporal-worker
+  - quote-metabase
   - quote-external-secrets

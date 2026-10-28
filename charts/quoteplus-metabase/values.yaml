@@ -1,0 +1,61 @@
+# Mirrors the AWS cluster's quote-metabase namespace: a metabase Deployment
+# plus its own single-replica Postgres StatefulSet (not CloudNativePG - this
+# product doesn't use CNPG anywhere, matching what's actually deployed).
+# Restored from gitops-quote-mrea git history (removed there 2026-09-04,
+# "not needed for this env" - RIFAST does need it) and re-added Key Vault/
+# ESO wiring, which stage's own copy had already dropped by the time it
+# was removed. See that repo's CLAUDE.md "Metabase - removed" section for
+# the full history and the original chart.
+
+metabase:
+  image:
+    repository: metabase/metabase-enterprise
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+    targetPort: 3000
+  resources:
+    requests: { cpu: "250m", memory: "1Gi" }
+    limits:   { cpu: "1", memory: "2Gi" }
+
+postgres:
+  image:
+    repository: postgres
+    tag: "16"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  database: "metabase"          # overridden per environment
+  storage:
+    size: 20Gi
+    storageClassName: managed-csi
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "500m", memory: "1Gi" }
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ""                      # set per environment
+  annotations:
+    cert-manager.io/cluster-issuer: quoteplus-letsencrypt-prod
+  tls:
+    enabled: true
+    secretName: quoteplus-metabase-tls
+
+workloadIdentity:
+  enabled: false
+  serviceAccountName: quoteplus-workload-sa
+
+# Sourced from Key Vault via the per-namespace SecretStore (see
+# charts/quoteplus-external-secrets) instead of a plaintext secrets: map -
+# see templates/externalsecret.yaml. data maps K8s secret key -> Key Vault
+# secret name.
+externalSecret:
+  enabled: false
+  storeName: quoteplus-azure-keyvault
+  refreshInterval: 1h
+  data: {}
+
+secrets: {}
