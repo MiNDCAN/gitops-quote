@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Named after the REPO's account scope (gitops-quote-mindcan), not any one
+  # customer - this root app bootstraps the whole projects/ folder, which
+  # will hold every current and future customer's AppProject, plus any
+  # Mindcan-internal prod/non-prod clusters added to this same repo later.
+  # Naming it after today's first customer (RIFAST) would become actively
+  # misleading once more are added. gitops-quote-mrea is a SEPARATE Azure
+  # account/subscription with its own root app of the same shape - a bare
+  # "quoteplus-projects-root" name collided with it live on the shared
+  # mindcan-common hub (confirmed 2026-10-28: applying this file under that
+  # name overwrote gitops-quote-mrea's root app, which auto-pruned stage's
+  # AppProject until reverted - see CLAUDE.md).
+  name: quoteplus-gitops-quote-mindcan-projects-root
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    type: root-application
+    purpose: project-management
+  annotations:
+    argocd.argoproj.io/description: "Root application managing AppProjects for every customer/cluster under the Mindcan account's QuotePlus fleet, from MiNDCAN/gitops-quote@main. Apply once per hub via 'kubectl apply -f'. Tracks main deliberately, not production - this manages AppProject/ApplicationSet DEFINITIONS (which cluster/project a customer's apps point at), not the chart/values content those generated Applications sync (that's targetRevision: production, set per-ApplicationSet-template in apps/applicationsets/)."
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MiNDCAN/gitops-quote.git
+    targetRevision: main
+    path: projects
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
