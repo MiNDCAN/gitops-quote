@@ -58,6 +58,11 @@ externalSecret:
     MICROSOFT_OAUTH_TOKEN_URL: "rifast-microsoft-oauth-token-url"
     KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
     KEYCLOAK_REALM: "rifast-keycloak-realm"
+    # Global Data sync - confirmed 2026-10-28: not in customerdemo's current
+    # real deployment manifest (doesn't exist there today), but needed for
+    # RIFAST going forward per explicit instruction ("will need it in
+    # future") - kept wired rather than removed. GLOBAL_DATA_SP_DRIVE_ID
+    # reuses the same shared SharePoint drive as everything else.
     GLOBAL_DATA_SP_FOLDER_PATH: "rifast-customer-global-data-sp-folder-path"
     GLOBAL_DATA_SP_FILE_PATTERN: "rifast-customer-global-data-sp-file-pattern"
     GLOBAL_DATA_SYNC_TAB_NAME: "rifast-customer-global-data-sync-tab-name"

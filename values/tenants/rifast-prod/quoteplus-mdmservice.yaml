@@ -25,12 +25,11 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # LIMANS is stage's internal martinrea.com integration - almost certainly
-  # NOT applicable to RIFAST, a separate customer. Confirm with the dev
-  # team whether this feature applies here at all before populating these
-  # Key Vault secrets. DATABASE_USER_NAME duplicates DATABASE_USERNAME on
-  # purpose - mdm-service's own code reads the former (a confirmed typo vs.
-  # other services, see gitops-quote-mrea's equivalent file).
+  # LIMANS applies to RIFAST too - confirmed explicitly, same Martinrea
+  # LIMANS integration/credentials reused as-is (not customer-specific).
+  # DATABASE_USER_NAME duplicates DATABASE_USERNAME on purpose - mdm-
+  # service's own code reads the former (a confirmed typo vs. other
+  # services, see gitops-quote-mrea's equivalent file).
   data:
     DATABASE_HOST: "rifast-database-host"
     DATABASE_PORT: "rifast-database-port"
@@ -41,8 +40,8 @@ externalSecret:
     EMAIL_HOST: "rifast-email-host"
     EMAIL_PORT: "rifast-email-port"
     EMAIL_SECURE: "rifast-email-secure"
-    LIMANS_API_ID: "rifast-limans-api-id-or-confirm-not-applicable"
-    LIMANS_URL: "rifast-limans-url-or-confirm-not-applicable"
+    LIMANS_API_ID: "rifast-limans-api-id"
+    LIMANS_URL: "rifast-limans-url"
     QUOTE_SERVICE_URL: "rifast-mdmservice-quote-service-url"
     LANGUAGE_SERVICE_URL: "rifast-mdmservice-language-service-url"
     KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
@@ -56,5 +55,5 @@ externalSecret:
     EMAIL_USER: "rifast-email-user"
     EMAIL_FROM: "rifast-email-from"
     EMAIL_PASSWORD: "rifast-email-password"
-    LIMANS_API_KEY: "rifast-limans-api-key-or-confirm-not-applicable"
-    LIMANS_TOKEN: "rifast-limans-token-or-confirm-not-applicable"
+    LIMANS_API_KEY: "rifast-limans-api-key"
+    LIMANS_TOKEN: "rifast-limans-token"
