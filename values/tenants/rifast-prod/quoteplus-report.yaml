@@ -7,22 +7,13 @@ image:
 ingress:
   host: "rifast-quoteplus.report.mindcaninc.com"
 
-configApp:
-  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  DB_SCHEMA: "public"
-  AWS_REGION: "us-east-1"
-  AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  PUBLIC_AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  EMAIL_HOST: "smtp-mail.outlook.com"
-  EMAIL_PORT: "587"
-  EMAIL_SECURE: "true"
-  MDM_URL: "https://rifast-quoteplus.mdm.mindcaninc.com"
-  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com"
-  FRAMEWORK_URL: "https://rifast-quoteplus.framework.mindcaninc.com"
-  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
-  USER_DETAILS_URL: "https://rifast-quoteplus.user.mindcaninc.com"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -31,8 +22,26 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # REPLACE_WITH_REAL_VALUE items still need real business data in Key
+  # Vault; structural ones (DB host, in-cluster URLs) get populated with
+  # their already-known real values. Shared keys reuse the SAME Key Vault
+  # secret name across every service that needs them.
   data:
+    DATABASE_HOST: "rifast-database-host"
+    DATABASE_PORT: "rifast-database-port"
+    DB_SCHEMA: "rifast-db-schema"
+    AWS_REGION: "rifast-aws-region"
+    AWS_S3_BUCKET: "rifast-report-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "rifast-report-public-aws-s3-bucket"
+    EMAIL_HOST: "rifast-email-host"
+    EMAIL_PORT: "rifast-email-port"
+    EMAIL_SECURE: "rifast-email-secure"
+    MDM_URL: "rifast-report-mdm-url"
+    LANGUAGE_SERVICE_URL: "rifast-report-language-service-url"
+    FRAMEWORK_URL: "rifast-report-framework-url"
+    KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
+    KEYCLOAK_REALM: "rifast-keycloak-realm"
+    USER_DETAILS_URL: "rifast-report-user-details-url"
     DATABASE_USERNAME: "rifast-app-database-user"
     DATABASE_USER_NAME: "rifast-app-database-user"
     DATABASE_NAME: "rifast-app-database-name"

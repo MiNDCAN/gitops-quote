@@ -7,24 +7,15 @@ image:
 ingress:
   host: "rifast-quoteplus.framework.mindcaninc.com"
 
-# DATABASE_HOST/PORT/DB_SCHEMA are in-cluster, same as every environment.
-# Everything else below depends on RIFAST's own Azure AD/SharePoint/Keycloak
-# setup, not mindcaninc's - REPLACE_WITH_REAL_VALUE throughout, do not reuse
-# stage's test tenant values.
-configApp:
-  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  DB_SCHEMA: "public"
-  MAX_WORKERS: "8"
-  LOG_LEVEL: "INFO"
-  NOTIFICATION_API_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
-  SHAREPOINT_SCOPE: "https://graph.microsoft.com/.default"
-  SHAREPOINT_SITE_ID: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
-  USER_MANAGEMENT_SERVICE_URL: "https://rifast-quoteplus.user.mindcaninc.com"
-  APPLICATION_ID: "QP"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below, not just real secrets.
+# envFrom.configMaps overridden to [] since no ConfigMap is rendered at all
+# (configApp is empty) - same override pattern quoteplus-frontend already
+# used for its own all-empty case. See CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -33,8 +24,26 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # Shared keys (rifast-database-*, rifast-keycloak-*) reuse the SAME Key
+  # Vault secret name across every service that needs them - populate once,
+  # every service picks it up. Service-specific keys are prefixed
+  # rifast-framework-*. REPLACE_WITH_REAL_VALUE items still need real
+  # business data in Key Vault; structural ones (DB host, in-cluster URLs)
+  # get populated with their already-known real values.
   data:
+    DATABASE_HOST: "rifast-database-host"
+    DATABASE_PORT: "rifast-database-port"
+    DB_SCHEMA: "rifast-db-schema"
+    MAX_WORKERS: "rifast-framework-max-workers"
+    LOG_LEVEL: "rifast-framework-log-level"
+    NOTIFICATION_API_URL: "rifast-framework-notification-api-url"
+    SHAREPOINT_SCOPE: "rifast-sharepoint-scope"
+    SHAREPOINT_SITE_ID: "rifast-sharepoint-site-id"
+    KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
+    KEYCLOAK_REALM: "rifast-keycloak-realm"
+    KEYCLOAK_CLIENT_ID: "rifast-keycloak-client-id"
+    USER_MANAGEMENT_SERVICE_URL: "rifast-framework-user-management-service-url"
+    APPLICATION_ID: "rifast-application-id"
     DATABASE_NAME: "rifast-app-database-name"
     DATABASE_USER_NAME: "rifast-app-database-user"
     DATABASE_PASSWORD: "rifast-app-database-password"

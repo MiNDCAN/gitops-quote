@@ -2,6 +2,16 @@
 # and web.additionalEnv hardcode stage's host/Keycloak realm - both fully
 # overridden here since Helm replaces (not merges) list-type values.
 #
+# ingress host/annotations/TLS secret name are Helm chart wiring, not
+# application config - left as plain values here, consistent with how
+# every other tenant file in this repo treats ingress.host.
+#
+# Every additionalEnv entry below (even non-secret ones like
+# TEMPORAL_AUTH_SCOPES) is sourced via secretKeyRef, not value: - the
+# upstream Temporal chart has no configApp/ConfigMap mechanism of its own,
+# so secretKeyRef is the only way to keep these out of the repo. See
+# quoteplus-framework.yaml for the repo-wide "nothing committed" policy.
+#
 # TEMPORAL_DB_PASSWORD must match POSTGRES_PASSWORD in
 # quoteplus-temporal-postgres.yaml - keep both Key Vault secrets in sync.
 # TEMPORAL_AUTH_PROVIDER_URL/CALLBACK_URL and the Keycloak client
@@ -22,9 +32,15 @@ temporal:
           secretName: quoteplus-temporal-ui-tls
     additionalEnv:
       - name: TEMPORAL_AUTH_ENABLED
-        value: "true"
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_ENABLED
       - name: TEMPORAL_AUTH_PROVIDER_URL
-        value: "REPLACE_WITH_REAL_VALUE"   # https://<prod-keycloak>/realms/<RIFAST realm>
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_PROVIDER_URL
       - name: TEMPORAL_AUTH_CLIENT_ID
         valueFrom:
           secretKeyRef:
@@ -36,9 +52,15 @@ temporal:
             name: quoteplus-temporal-secrets
             key: TEMPORAL_AUTH_CLIENT_SECRET
       - name: TEMPORAL_AUTH_CALLBACK_URL
-        value: "https://rifast-quoteplus.temporal.mindcaninc.com/auth/sso/callback"
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_CALLBACK_URL
       - name: TEMPORAL_AUTH_SCOPES
-        value: "openid,profile,email"
+        valueFrom:
+          secretKeyRef:
+            name: quoteplus-temporal-secrets
+            key: TEMPORAL_AUTH_SCOPES
 
 secrets: {}
 
@@ -52,5 +74,9 @@ externalSecret:
   # exist yet (needs the production realm details).
   data:
     TEMPORAL_DB_PASSWORD: "rifast-temporal-postgres-password"
+    TEMPORAL_AUTH_ENABLED: "rifast-temporal-auth-enabled"
+    TEMPORAL_AUTH_PROVIDER_URL: "rifast-temporal-auth-provider-url"
     TEMPORAL_AUTH_CLIENT_ID: "rifast-temporal-auth-client-id"
     TEMPORAL_AUTH_CLIENT_SECRET: "rifast-temporal-auth-client-secret"
+    TEMPORAL_AUTH_CALLBACK_URL: "rifast-temporal-auth-callback-url"
+    TEMPORAL_AUTH_SCOPES: "rifast-temporal-auth-scopes"

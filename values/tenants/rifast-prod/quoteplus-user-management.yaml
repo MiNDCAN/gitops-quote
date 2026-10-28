@@ -7,19 +7,13 @@ image:
 ingress:
   host: "rifast-quoteplus.user.mindcaninc.com"
 
-# REDIS_HOST is in-cluster, same everywhere. Keycloak values depend on
-# RIFAST's production realm, not yet shared - REPLACE_WITH_REAL_VALUE.
-configApp:
-  QP_KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
-  QP_KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
-  QP_KEYCLOAK_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
-  QP_KEYCLOAK_CLIENT_UUID: ""
-  QP_KEYCLOAK_WEB_CLIENT_ID: "REPLACE_WITH_REAL_VALUE"
-  VALID_APPLICATIONIDS: "QP"
-  QP_APP_REDIRECT_URL: "https://rifast-quoteplus.mindcaninc.com/"
-  MAGIC_LINK_EXPIRE_TIME: "2700"
-  REDIS_HOST: "quoteplus-redis-service.quote-redis.svc.cluster.local"
-  REDIS_PORT: "6379"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -28,10 +22,20 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
-  # REDIS_PASSWORD is a no-op either way (chart's Redis has no AUTH
-  # configured, confirmed for stage - same chart used here) but kept for
-  # parity/forward-compatibility.
+  # REPLACE_WITH_REAL_VALUE - Keycloak values depend on RIFAST's production
+  # realm, not yet shared. REDIS_PASSWORD is a no-op either way (chart's
+  # Redis has no AUTH configured, confirmed for stage - same chart used
+  # here) but kept for parity/forward-compatibility.
   data:
+    QP_KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
+    QP_KEYCLOAK_REALM: "rifast-keycloak-realm"
+    QP_KEYCLOAK_CLIENT_ID: "rifast-keycloak-client-id"
+    QP_KEYCLOAK_CLIENT_UUID: "rifast-keycloak-client-uuid"
+    QP_KEYCLOAK_WEB_CLIENT_ID: "rifast-keycloak-web-client-id"
+    VALID_APPLICATIONIDS: "rifast-user-management-valid-applicationids"
+    QP_APP_REDIRECT_URL: "rifast-application-url"
+    MAGIC_LINK_EXPIRE_TIME: "rifast-user-management-magic-link-expire-time"
+    REDIS_HOST: "rifast-redis-host"
+    REDIS_PORT: "rifast-redis-port"
     QP_KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
     REDIS_PASSWORD: "rifast-redis-password-noop"

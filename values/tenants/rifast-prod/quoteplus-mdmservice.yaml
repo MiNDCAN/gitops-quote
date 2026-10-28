@@ -7,26 +7,13 @@ image:
 ingress:
   host: "rifast-quoteplus.mdm.mindcaninc.com"
 
-configApp:
-  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  DB_SCHEMA: "public"
-  AWS_REGION: "us-east-1"
-  AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  PUBLIC_AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  EMAIL_HOST: "smtp-mail.outlook.com"
-  EMAIL_PORT: "587"
-  EMAIL_SECURE: "true"
-  # LIMANS is stage's internal martinrea.com integration (apps.martinrea.com) -
-  # almost certainly NOT applicable to RIFAST, a separate customer. Confirm
-  # with the dev team whether this feature applies here at all before
-  # filling these in; left as placeholders rather than assumed-needed.
-  LIMANS_API_ID: "REPLACE_WITH_REAL_VALUE_OR_CONFIRM_NOT_APPLICABLE"
-  LIMANS_URL: "REPLACE_WITH_REAL_VALUE_OR_CONFIRM_NOT_APPLICABLE"
-  QUOTE_SERVICE_URL: "https://rifast-quoteplus.management.mindcaninc.com/quote/graphql"
-  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com"
-  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -35,12 +22,28 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
-  # DATABASE_USER_NAME duplicates DATABASE_USERNAME on purpose - mdm-
-  # service's own code reads the former (a confirmed typo vs. other
-  # services, see gitops-quote-mrea's equivalent file for the live-
-  # confirmed error this works around).
+  # LIMANS is stage's internal martinrea.com integration - almost certainly
+  # NOT applicable to RIFAST, a separate customer. Confirm with the dev
+  # team whether this feature applies here at all before populating these
+  # Key Vault secrets. DATABASE_USER_NAME duplicates DATABASE_USERNAME on
+  # purpose - mdm-service's own code reads the former (a confirmed typo vs.
+  # other services, see gitops-quote-mrea's equivalent file).
   data:
+    DATABASE_HOST: "rifast-database-host"
+    DATABASE_PORT: "rifast-database-port"
+    DB_SCHEMA: "rifast-db-schema"
+    AWS_REGION: "rifast-aws-region"
+    AWS_S3_BUCKET: "rifast-mdmservice-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "rifast-mdmservice-public-aws-s3-bucket"
+    EMAIL_HOST: "rifast-email-host"
+    EMAIL_PORT: "rifast-email-port"
+    EMAIL_SECURE: "rifast-email-secure"
+    LIMANS_API_ID: "rifast-limans-api-id-or-confirm-not-applicable"
+    LIMANS_URL: "rifast-limans-url-or-confirm-not-applicable"
+    QUOTE_SERVICE_URL: "rifast-mdmservice-quote-service-url"
+    LANGUAGE_SERVICE_URL: "rifast-mdmservice-language-service-url"
+    KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
+    KEYCLOAK_REALM: "rifast-keycloak-realm"
     DATABASE_USERNAME: "rifast-app-database-user"
     DATABASE_USER_NAME: "rifast-app-database-user"
     DATABASE_NAME: "rifast-app-database-name"

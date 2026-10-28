@@ -4,6 +4,19 @@ ingress:
 # dbServer.host is in-cluster Service DNS, same everywhere - not overridden.
 # maintenanceDb/username must match quoteplus-postgres.yaml's database/
 # POSTGRES_USER for RIFAST, not stage's customerdemo values.
+#
+# KNOWN EXCEPTION to this repo's "nothing committed" policy: this chart's
+# templates/servers-configmap.yaml unconditionally renders a ConfigMap
+# from these dbServer.* fields (no `if` guard, no Secret-backed path -
+# pgAdmin's PGADMIN_SERVER_JSON_FILE mechanism only reads a mounted file,
+# and this chart mounts it from a ConfigMap, not a Secret). Fixing this
+# for real means either converting the template to mount from a Secret
+# populated by ExternalSecret, or gating it behind a toggle - a chart
+# change, not a values-file change, and intentionally not done here
+# without confirming with the user first since it risks breaking pgAdmin's
+# working auto-populate convenience feature untested. Content is display
+# metadata only (name/host/port/maintenanceDb/username, no password) -
+# flagged, not silently left unmentioned.
 dbServer:
   name: "RIFAST Production - App DB"
   maintenanceDb: "quoteplus"
@@ -11,7 +24,19 @@ dbServer:
 
 # Internal login only, same as stage - SSO via Keycloak once a pgadmin
 # client exists in RIFAST's production realm.
-secrets: {}
+#
+# IMPORTANT: this chart's own values.yaml bakes a non-empty secrets: map
+# as the CHART DEFAULT (PGADMIN_DEFAULT_EMAIL/PASSWORD = "REPLACE_WITH_
+# REAL_VALUE"), same class of bug found in quoteplus-temporal-worker -
+# Helm deep-merges maps, so secrets: {} here does NOT clear it. Worse
+# here: templates/secret.yaml has no guard tying it to externalSecret.
+# enabled, so leaving the inherited keys un-nulled renders BOTH a plain
+# Secret (from secret.yaml) and an ExternalSecret-owned Secret under the
+# SAME name, fighting over ownership. Nulled explicitly below - confirmed
+# via `helm template` that only the ExternalSecret-owned Secret renders.
+secrets:
+  PGADMIN_DEFAULT_EMAIL: null
+  PGADMIN_DEFAULT_PASSWORD: null
 
 workloadIdentity:
   enabled: true
