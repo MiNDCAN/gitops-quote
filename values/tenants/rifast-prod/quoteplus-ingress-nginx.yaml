@@ -1,0 +1,34 @@
+ingress-nginx:
+  controller:
+    replicaCount: 2
+    ingressClassResource:
+      name: nginx
+      default: true
+    service:
+      type: LoadBalancer
+      annotations:
+        # Without this, Azure's Standard LB probes "/" on the Service port
+        # and expects a 200-399 response. ingress-nginx's default backend
+        # returns 404 for any request with no matching Host, which Azure
+        # treats as unhealthy and silently stops routing ALL inbound
+        # traffic to the node - even though the pod/Service/ingress are
+        # completely fine for real requests with a matching Host header.
+        # Confirmed live 2026-10-28: every RIFAST hostname was externally
+        # unreachable (TCP connect timeout, Let's Encrypt validators got
+        # Cloudflare 522) purely because of this, despite NSG/LB
+        # rules/health probe config all being otherwise correctly
+        # provisioned. /healthz always returns 200 regardless of Host.
+        # Mirrors gitops-quote-mrea's stage config, which already has
+        # this fix applied.
+        service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+    config:
+      # Mirrors stage's own proven config for the same application stack
+      # (RIFAST runs the identical Temporal+Keycloak combination that
+      # caused stage's large-cookie incident, so pre-empting it here
+      # rather than waiting to hit it again).
+      proxy-body-size: "2048m"
+      proxy-read-timeout: "300"
+      use-forwarded-headers: "true"
+      large-client-header-buffers: "4 32k"
+    metrics:
+      enabled: false
