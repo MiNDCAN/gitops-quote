@@ -59,6 +59,16 @@ externalSecret:
     LANGUAGE_SERVICE_URL: "rifast-management-language-service-url"
     SUPPLIER_URL: "rifast-management-supplier-url"
     MODEL_TYPE: "rifast-management-model-type"
+    # Found missing entirely during the same cross-check - this service's
+    # real ConfigMap has a SECOND, distinct AWS S3 credential pair
+    # (AWS_S3_ACCESS_ID/KEY/REGION/BUCKET_NAME) alongside the plain one
+    # above (AWS_ACCESS_KEY_ID/SECRET_ACCESS_KEY) - genuinely two different
+    # keys, same pattern as quoteplus-supplier.yaml/quoteplus-customer-
+    # management.yaml already document.
+    AWS_S3_ACCESS_ID: "rifast-aws-s3-access-id"
+    AWS_S3_ACCESS_KEY: "rifast-aws-s3-access-key"
+    AWS_S3_REGION: "rifast-aws-region"
+    AWS_S3_BUCKET_NAME: "rifast-management-aws-s3-bucket-name"
     KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
     KEYCLOAK_REALM: "rifast-keycloak-realm"
     KEYCLOAK_CLIENT_ID: "rifast-keycloak-client-id"
