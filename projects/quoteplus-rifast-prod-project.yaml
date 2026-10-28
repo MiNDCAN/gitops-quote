@@ -69,6 +69,14 @@ spec:
       server: '*'
     - namespace: promtail
       server: '*'
+    # cert-manager's leader-election Role/RoleBinding land in kube-system
+    # (not configurable away in this chart's pinned upstream version) -
+    # confirmed live 2026-10-28, cert-manager's sync failed with "namespace
+    # kube-system is not permitted" without this. Stage's own AppProject
+    # doesn't have this entry and its cert-manager still works - likely an
+    # older chart/values combination there, not investigated further.
+    - namespace: kube-system
+      server: '*'
 
   clusterResourceWhitelist:
     - group: ''
