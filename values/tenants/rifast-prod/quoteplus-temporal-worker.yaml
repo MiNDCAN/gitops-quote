@@ -3,7 +3,7 @@
 # substitution, not real YAML editing (see gitops-quote-mrea/CLAUDE.md).
 # No RIFAST-specific Jenkins stage exists yet.
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-temporal-worker-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-temporal-worker-dev
   tag: ""   # REPLACE_WITH_REAL_VALUE - CI-owned, no Jenkins stage yet
 
 api:

@@ -5,7 +5,7 @@ env: rifast-prod
 # gitops-quote-mrea/CLAUDE.md's equivalent note). CI (a new Jenkins stage
 # pointed at this file) owns this - do not hand-edit outside a rollback.
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-frontend-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-frontend-dev
   tag: ""   # REPLACE_WITH_REAL_VALUE - no RIFAST-specific Jenkins stage exists yet
 
 ingress:
