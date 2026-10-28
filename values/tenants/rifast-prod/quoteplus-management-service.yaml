@@ -40,6 +40,10 @@ externalSecret:
     EMAIL_PORT: "rifast-email-port"
     EMAIL_SECURE: "rifast-email-secure"
     SHAREPOINT_ROOT_FOLDER: "rifast-sharepoint-root-folder"
+    # Found missing entirely during a cross-check against
+    # MNC_QUOTE_REPO@customerdemo's real deployment manifest - this key was
+    # never added during the original configApp->Key Vault conversion.
+    SHAREPOINT_TEMPLATE_FOLDER: "rifast-management-sharepoint-template-folder"
     APP_CLOUD_STORAGE: "rifast-management-app-cloud-storage"
     BASE_URL: "rifast-application-url"
     USER_DETAILS_URL: "rifast-management-user-details-url"
