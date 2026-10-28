@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    app.kubernetes.io/part-of: quoteplus
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        {{- if .Values.workloadIdentity.enabled }}
+        azure.workload.identity/use: "true"
+        {{- end }}
+    spec:
+      {{- if .Values.workloadIdentity.enabled }}
+      serviceAccountName: {{ .Values.workloadIdentity.serviceAccountName }}
+      {{- end }}
+      containers:
+        - name: metabase
+          image: "{{ .Values.metabase.image.repository }}:{{ .Values.metabase.image.tag }}"
+          imagePullPolicy: {{ .Values.metabase.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.metabase.service.targetPort }}
+          env:
+            - name: MB_DB_TYPE
+              value: postgres
+            - name: MB_DB_HOST
+              value: {{ .Release.Name }}-postgres-service
+            - name: MB_DB_PORT
+              value: {{ .Values.postgres.service.port | quote }}
+            - name: MB_DB_DBNAME
+              value: {{ .Values.postgres.database | quote }}
+            - name: MB_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MB_DB_USER
+            - name: MB_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MB_DB_PASS
+          resources:
+            {{- toYaml .Values.metabase.resources | nindent 12 }}

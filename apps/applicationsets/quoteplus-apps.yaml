@@ -31,6 +31,9 @@ spec:
           - service: quoteplus-temporal-postgres
             namespace: quote-temporal
             wave: "10"
+          - service: quoteplus-metabase
+            namespace: quote-metabase
+            wave: "10"
           # Temporal server/UI (wave 15): between data and the app layer -
           # the worker (wave 20 below) needs its frontend Service to exist
           # by connection time.

@@ -59,6 +59,8 @@ spec:
       server: '*'
     - namespace: quote-temporal-worker
       server: '*'
+    - namespace: quote-metabase
+      server: '*'
     - namespace: quote-external-secrets
       server: '*'
     - namespace: quoteplus-system
