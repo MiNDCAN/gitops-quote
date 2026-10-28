@@ -7,20 +7,13 @@ image:
 ingress:
   host: "rifast-quoteplus.res-mdm.mindcaninc.com"
 
-configApp:
-  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  DB_SCHEMA: "public"
-  AWS_REGION: "us-east-1"
-  AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  PUBLIC_AWS_S3_BUCKET: "REPLACE_WITH_REAL_VALUE"
-  EMAIL_HOST: "smtp-mail.outlook.com"
-  EMAIL_PORT: "587"
-  EMAIL_SECURE: "true"
-  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
-  LANGUAGE_SERVICE_URL: "https://rifast-quoteplus.language.mindcaninc.com/language"
-  APPLICATION_URL: "https://rifast-quoteplus.mindcaninc.com/"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -29,8 +22,24 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # REPLACE_WITH_REAL_VALUE items still need real business data in Key
+  # Vault; structural ones (DB host, in-cluster URLs) get populated with
+  # their already-known real values. Shared keys reuse the SAME Key Vault
+  # secret name across every service that needs them.
   data:
+    DATABASE_HOST: "rifast-database-host"
+    DATABASE_PORT: "rifast-database-port"
+    DB_SCHEMA: "rifast-db-schema"
+    AWS_REGION: "rifast-aws-region"
+    AWS_S3_BUCKET: "rifast-resmdm-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "rifast-resmdm-public-aws-s3-bucket"
+    EMAIL_HOST: "rifast-email-host"
+    EMAIL_PORT: "rifast-email-port"
+    EMAIL_SECURE: "rifast-email-secure"
+    KEYCLOAK_REALM: "rifast-keycloak-realm"
+    KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
+    LANGUAGE_SERVICE_URL: "rifast-resmdm-language-service-url"
+    APPLICATION_URL: "rifast-application-url"
     DATABASE_USERNAME: "rifast-app-database-user"
     DATABASE_PASSWORD: "rifast-app-database-password"
     DATABASE_NAME: "rifast-app-database-name"

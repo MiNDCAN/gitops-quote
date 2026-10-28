@@ -7,12 +7,13 @@ image:
 ingress:
   host: "rifast-quoteplus.language.mindcaninc.com"
 
-configApp:
-  DATABASE_HOST: "quoteplus-postgres-service.quote-postgres.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  DB_SCHEMA: "public"
-  KEYCLOAK_REALM: "REPLACE_WITH_REAL_VALUE"
-  KEYCLOAK_SERVER_URL: "REPLACE_WITH_REAL_VALUE"
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
 
 secrets: {}
 
@@ -23,6 +24,11 @@ externalSecret:
   enabled: true
   # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
   data:
+    DATABASE_HOST: "rifast-database-host"
+    DATABASE_PORT: "rifast-database-port"
+    DB_SCHEMA: "rifast-db-schema"
+    KEYCLOAK_REALM: "rifast-keycloak-realm"
+    KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
     DATABASE_NAME: "rifast-app-database-name"
     DATABASE_PASSWORD: "rifast-app-database-password"
     DATABASE_USER_NAME: "rifast-app-database-user"
