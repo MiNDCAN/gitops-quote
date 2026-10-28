@@ -25,10 +25,13 @@ workloadIdentity:
 
 externalSecret:
   enabled: true
-  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
-  # QP_KEYCLOAK_CLIENT_SECRET and KEYCLOAK_CLIENT_SECRET should be the SAME
-  # Keycloak client once RIFAST's realm exists - same Key Vault secret name,
-  # not two different values (matches stage's own resolved convention).
+  # REPLACE_WITH_REAL_VALUE - some keys below still not populated in
+  # kv-rifast-quoteplus (DB/email creds etc). Keycloak keys ARE now
+  # populated: realm QuotePlus-Rifast created 2026-10-28 on
+  # https://keycloak.mindcaninc.com, cloned from QuotePlus-Customerdemo.
+  # QP_KEYCLOAK_CLIENT_SECRET and KEYCLOAK_CLIENT_SECRET are the SAME
+  # Keycloak client (qtplus_admin) - same Key Vault secret name, not two
+  # different values (matches stage's own resolved convention).
   data:
     QP_KEYCLOAK_SERVER_URL: "rifast-keycloak-server-url"
     QP_KEYCLOAK_REALM: "rifast-keycloak-realm"
