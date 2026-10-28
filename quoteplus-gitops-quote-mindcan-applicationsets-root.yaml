@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Named after the repo's account scope (gitops-quote-mindcan), same
+  # reasoning as quoteplus-gitops-quote-mindcan-projects-root.yaml - see
+  # that file's comment for the full story (a bare "quoteplus-
+  # applicationsets-root" name collided with gitops-quote-mrea's root app
+  # of the same name on the shared mindcan-common hub, confirmed 2026-10-28).
+  name: quoteplus-gitops-quote-mindcan-applicationsets-root
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    type: root-application
+    purpose: applicationset-management
+  annotations:
+    argocd.argoproj.io/description: "Root application managing ApplicationSets for every customer/cluster under the Mindcan account's QuotePlus fleet, from MiNDCAN/gitops-quote@main. Apply once per hub via 'kubectl apply -f', AFTER quoteplus-gitops-quote-mindcan-projects-root. Tracks main deliberately - see that file's note on why the ApplicationSet definitions themselves aren't the production gate; the Applications they generate are (targetRevision: production)."
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MiNDCAN/gitops-quote.git
+    targetRevision: main
+    path: apps/applicationsets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

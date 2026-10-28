@@ -82,6 +82,27 @@ production customers side by side - cluster-singleton ArgoCD object names (`AppP
 `ApplicationSet`) must additionally be customer-scoped (`quoteplus-<customer>-prod`), not just
 product-scoped, or two customers' bootstraps collide.
 
+**Root apps are named after the repo's account scope, not any customer.** `quoteplus-
+gitops-quote-mindcan-projects-root` and `quoteplus-gitops-quote-mindcan-applicationsets-root` - the
+`gitops-quote-mindcan` segment identifies this repo (everything under the Mindcan Azure account:
+every current/future customer, plus any Mindcan-internal prod/non-prod clusters added here later),
+distinct from `gitops-quote-mrea`'s separate Azure account/subscription. **Do not name these after
+the first customer** (e.g. "rifast") - a single pair of root apps bootstraps the *entire*
+`projects/`/`apps/applicationsets/` folders for every customer this repo will ever hold, so a
+customer-scoped name becomes actively misleading the moment a second customer is added.
+
+This naming exists because of a real incident (2026-10-28): both this repo and `gitops-quote-mrea`
+independently used the bare names `quoteplus-projects-root`/`quoteplus-applicationsets-root` for
+their root apps. Applying this repo's version to the shared `mindcan-common` hub silently
+overwrote `gitops-quote-mrea`'s root app (`kubectl apply` reported `configured`, not `created` -
+easy to miss). With `automated: {prune: true}` already on that root app, it immediately deleted the
+live `quoteplus-stage` AppProject, which cascaded into 9 stage Applications going
+`Unknown`/`InvalidSpecError` until the root app was reverted and the Applications force-refreshed.
+No live workloads were affected (AppProject deletion doesn't touch deployed pods, only ArgoCD's own
+validation of them) and the whole thing recovered in about a minute, but it's a sharp reminder:
+**check `kubectl get application -n argocd <name>` for an existing object before applying anything
+new to the shared hub**, especially anything with `prune: true`.
+
 ## Cluster naming/sizing convention
 
 Matches the org's existing AKS node pool pattern (confirmed 2026-10-23, same shape every ProfitPlus
