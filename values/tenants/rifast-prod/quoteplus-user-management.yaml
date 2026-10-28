@@ -47,3 +47,18 @@ externalSecret:
     REDIS_PORT: "rifast-redis-port"
     QP_KEYCLOAK_CLIENT_SECRET: "rifast-keycloak-client-secret"
     REDIS_PASSWORD: "rifast-redis-password-noop"
+    # Found missing entirely during a cross-check against
+    # MNC_QUOTE_REPO@customerdemo's real deployment manifest - this whole
+    # Metabase BI-embedding block and USERS_API_URL were never added during
+    # the original configApp->Key Vault conversion. METABASE_SITE_URL points
+    # at a single shared MindCan-hosted Metabase instance (not customer-
+    # specific); METABASE_COLLECTION_ID is the one piece that's genuinely
+    # per-customer (which Metabase collection holds RIFAST's own reports) -
+    # confirm with the dev team whether RIFAST has a dedicated collection
+    # before populating it with a real value.
+    USERS_API_URL: "rifast-user-management-users-api-url"
+    METABASE_USERNAME: "rifast-metabase-username"
+    METABASE_PASSWORD: "rifast-metabase-password"
+    METABASE_SITE_URL: "rifast-metabase-site-url"
+    METABASE_JWT_SHARED_SECRET: "rifast-metabase-jwt-shared-secret"
+    METABASE_COLLECTION_ID: "rifast-user-management-metabase-collection-id"
