@@ -2,10 +2,8 @@ env: rifast-prod
 
 image:
   repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-mdm-service-rifast
-  tag: "latest"   # PLACEHOLDER - no RIFAST-specific Jenkins stage yet, no real image
-  # published. Non-empty on purpose so the chart's `required` guard passes and
-  # the Deployment actually renders - expected to ImagePullBackOff until
-  # Jenkins publishes a real tag here. Confirmed acceptable by the user.
+  tag: "1.0.0-28"   # CI-owned - real Jenkins build, repository corrected from the
+  # -dev placeholder to match what the Jenkinsfile actually pushes (-rifast).
 
 ingress:
   host: "rifast-quoteplus.mdm.mindcaninc.com"
