@@ -19,8 +19,11 @@ ingress:
 # flagged, not silently left unmentioned.
 dbServer:
   name: "RIFAST Production - App DB"
-  maintenanceDb: "quoteplus"
-  username: "REPLACE_WITH_REAL_VALUE"   # must match quoteplus-postgres.yaml's POSTGRES_USER
+  # mnc_quoteplus_rifast is the REAL app database (restored from
+  # customerdemo 2026-10-29) - the chart's own bootstrap "quoteplus" DB
+  # is inert, see quoteplus-postgres.yaml's own comment on this.
+  maintenanceDb: "mnc_quoteplus_rifast"
+  username: "quoteplusrifastuser01"   # matches quoteplus-postgres.yaml's POSTGRES_USER
 
 # Internal login only, same as stage - SSO via Keycloak once a pgadmin
 # client exists in RIFAST's production realm.
