@@ -55,6 +55,10 @@ externalSecret:
     PGPASS_FILE: "rifast-pgadmin-pgpass"
 
 # Dev team should never need the real DB password to use pgAdmin - see
-# chart's own values.yaml comment for the full mechanism.
+# chart's own values.yaml comment for the full mechanism. pgadminLoginEmail
+# must match PGADMIN_DEFAULT_EMAIL's real value exactly (the email itself,
+# not the Key Vault secret name) - it's what pgAdmin derives its per-user
+# storage directory name from, which is where PassFile gets resolved.
 pgpassFile:
   enabled: true
+  pgadminLoginEmail: "naveenr@kyyba.com"

@@ -49,8 +49,17 @@ spec:
               mountPath: /pgadmin4/servers.json
               subPath: servers.json
             {{- if .Values.pgpassFile.enabled }}
+            # pgAdmin (server mode) resolves a server's "PassFile" value
+            # relative to THAT LOGIN'S OWN per-user storage directory
+            # (/var/lib/pgadmin/storage/<email with @ -> _>/), never an
+            # arbitrary absolute path - confirmed by reading
+            # pgadmin/utils/__init__.py's get_complete_file_path(). A path
+            # outside that directory is silently treated as "no passfile",
+            # which is why an earlier attempt at this (mounted at
+            # /pgadmin4/pgpass) still prompted for the password every
+            # login despite PassFile being set correctly in servers.json.
             - name: pgpass
-              mountPath: /pgadmin4/pgpass
+              mountPath: "/var/lib/pgadmin/storage/{{ .Values.pgpassFile.pgadminLoginEmail | replace "@" "_" }}/pgpass"
               subPath: pgpass
             {{- end }}
           resources:
