@@ -27,6 +27,44 @@ spec:
       # write its config DB to /var/lib/pgadmin.
       securityContext:
         fsGroup: 5050
+      {{- if .Values.pgpassFile.enabled }}
+      initContainers:
+        # A Secret subPath mount directly into a path under /var/lib/pgadmin
+        # (e.g. the earlier approach: mounting the file straight at
+        # storage/<email>/pgpass) makes kubelet create that directory tree
+        # itself, as root, mode 0755 - group-readable but NOT group-WRITABLE,
+        # even with fsGroup set. pgAdmin runs as uid 5050 and needs to WRITE
+        # under its own storage dir (confirmed live: "The user does not have
+        # permission to read and write to the specified storage directory"
+        # crash-looped the container on first try). Copying the file in via
+        # an initContainer and fixing ownership/perms afterward avoids
+        # kubelet ever creating that directory itself.
+        - name: pgpass-setup
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          # The pgadmin image's own USER directive defaults to uid 5050 -
+          # override to root here so mkdir/chown on a directory that may
+          # already be root-owned (e.g. left over from kubelet creating it
+          # via an earlier subPath mount) actually has permission to fix it.
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              target_dir="/var/lib/pgadmin/storage/{{ .Values.pgpassFile.pgadminLoginEmail | replace "@" "_" }}"
+              mkdir -p "$target_dir"
+              cp /tmp/pgpass-src/pgpass "$target_dir/pgpass"
+              chown -R 5050:5050 "$target_dir"
+              chmod 700 "$target_dir"
+              chmod 600 "$target_dir/pgpass"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/pgadmin
+            - name: pgpass-src
+              mountPath: /tmp/pgpass-src
+      {{- end }}
       containers:
         - name: pgadmin
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -48,20 +86,6 @@ spec:
             - name: servers
               mountPath: /pgadmin4/servers.json
               subPath: servers.json
-            {{- if .Values.pgpassFile.enabled }}
-            # pgAdmin (server mode) resolves a server's "PassFile" value
-            # relative to THAT LOGIN'S OWN per-user storage directory
-            # (/var/lib/pgadmin/storage/<email with @ -> _>/), never an
-            # arbitrary absolute path - confirmed by reading
-            # pgadmin/utils/__init__.py's get_complete_file_path(). A path
-            # outside that directory is silently treated as "no passfile",
-            # which is why an earlier attempt at this (mounted at
-            # /pgadmin4/pgpass) still prompted for the password every
-            # login despite PassFile being set correctly in servers.json.
-            - name: pgpass
-              mountPath: "/var/lib/pgadmin/storage/{{ .Values.pgpassFile.pgadminLoginEmail | replace "@" "_" }}/pgpass"
-              subPath: pgpass
-            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
@@ -72,7 +96,15 @@ spec:
           configMap:
             name: {{ .Release.Name }}-servers
         {{- if .Values.pgpassFile.enabled }}
-        - name: pgpass
+        # pgAdmin (server mode) resolves a server's "PassFile" value
+        # relative to THAT LOGIN'S OWN per-user storage directory
+        # (/var/lib/pgadmin/storage/<email with @ -> _>/), never an
+        # arbitrary absolute path - confirmed by reading
+        # pgadmin/utils/__init__.py's get_complete_file_path(). Only the
+        # initContainer above mounts this raw secret; the main container
+        # only ever sees the copy it placed under the PVC with correct
+        # ownership.
+        - name: pgpass-src
           secret:
             secretName: {{ .Release.Name }}-secrets
             defaultMode: 0600
