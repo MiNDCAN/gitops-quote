@@ -47,17 +47,11 @@ spec:
       server: '*'
     - namespace: quotemanagement-service
       server: '*'
-    - namespace: quote-distribution-list
-      server: '*'
     - namespace: quote-redis
       server: '*'
     - namespace: quote-postgres
       server: '*'
     - namespace: quote-pgadmin
-      server: '*'
-    - namespace: quote-temporal
-      server: '*'
-    - namespace: quote-temporal-worker
       server: '*'
     - namespace: quote-metabase
       server: '*'
