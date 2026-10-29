@@ -14,7 +14,9 @@ postgres:
   database: "quote_metabase_db"
 
 ingress:
-  host: "rifast-quoteplus.metabase.mindcaninc.com"
+  # Matches the existing shared instance's "ssa" subdomain convention
+  # (quoteplus.ssa.mindcaninc.com), not a "metabase" subdomain.
+  host: "rifast-quoteplus.ssa.mindcaninc.com"
 
 workloadIdentity:
   enabled: true
