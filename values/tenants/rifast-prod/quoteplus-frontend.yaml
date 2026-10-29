@@ -6,7 +6,7 @@ env: rifast-prod
 # pointed at this file) owns this - do not hand-edit outside a rollback.
 image:
   repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-frontend-rifast
-  tag: "1.0.0-31"   # CI-owned - real Jenkins build, repository corrected from the
+  tag: "1.0.0-32"   # CI-owned - real Jenkins build, repository corrected from the
   # -dev placeholder to match what the Jenkinsfile actually pushes (-rifast).
 
 ingress:
