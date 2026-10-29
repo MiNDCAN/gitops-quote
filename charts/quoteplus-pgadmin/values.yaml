@@ -68,3 +68,15 @@ externalSecret:
   storeName: quoteplus-azure-keyvault
   refreshInterval: 1h
   data: {}
+
+# Off by default (preserves stage's current "typed once per login session"
+# behavior above). When enabled, mounts a PGPASS_FILE key from this
+# chart's own Secret (plain or ExternalSecret-backed, either way) as a
+# 0600 pgpass-format file and points the server entry at it via
+# "PassFile", so pgAdmin never prompts for - or stores unencrypted inside
+# its own SQLite config DB - the Postgres password. Lets a tenant give
+# its dev team a working connection without ever handing out the DB
+# password itself. Only takes effect on a FRESH pgAdmin PVC - see
+# servers-configmap.yaml's own note on one-time-only import.
+pgpassFile:
+  enabled: false
