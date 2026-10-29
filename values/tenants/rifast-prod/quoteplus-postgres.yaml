@@ -1,7 +1,18 @@
 # This instance's own superuser, used by every RIFAST app service's
-# DATABASE_NAME/USERNAME/PASSWORD. Fresh database (no customerdemo test
-# data carried over) - "quoteplus" (the chart's own default) is a fine real
-# name for a from-scratch instance, not a placeholder.
+# DATABASE_NAME/USERNAME/PASSWORD.
+#
+# `database` below only controls the bootstrap POSTGRES_DB env var, which
+# the postgres image's entrypoint only acts on during initdb (first boot
+# with an empty PGDATA) - it creates a database literally named
+# "quoteplus" and is otherwise inert forever after. The REAL app database,
+# "mnc_quoteplus_rifast" (= rifast-app-database-name in Key Vault), was
+# created manually on 2026-10-29 via `CREATE DATABASE ... OWNER
+# quoteplusrifastuser01` and restored from a full pg_dump of customerdemo's
+# production EKS database (102 tables, real business data - not test/demo
+# data, confirmed row counts on customer/quote). --no-owner --no-privileges
+# used on both dump and restore since customerdemo's dump otherwise
+# references its own quotepluscustuser01 role, which doesn't exist here.
+# The bootstrap "quoteplus" database this field creates is unused.
 database: "quoteplus"
 
 secrets: {}
