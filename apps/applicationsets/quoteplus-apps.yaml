@@ -28,18 +28,9 @@ spec:
           - service: quoteplus-pgadmin
             namespace: quote-pgadmin
             wave: "10"
-          - service: quoteplus-temporal-postgres
-            namespace: quote-temporal
-            wave: "10"
           - service: quoteplus-metabase
             namespace: quote-metabase
             wave: "10"
-          # Temporal server/UI (wave 15): between data and the app layer -
-          # the worker (wave 20 below) needs its frontend Service to exist
-          # by connection time.
-          - service: quoteplus-temporal
-            namespace: quote-temporal
-            wave: "15"
           # App layer (wave 20).
           - service: quoteplus-frontend
             namespace: quote-frontend
@@ -70,12 +61,6 @@ spec:
             wave: "20"
           - service: quoteplus-management-service
             namespace: quotemanagement-service
-            wave: "20"
-          - service: quoteplus-distribution-list
-            namespace: quote-distribution-list
-            wave: "20"
-          - service: quoteplus-temporal-worker
-            namespace: quote-temporal-worker
             wave: "20"
   template:
     metadata:
