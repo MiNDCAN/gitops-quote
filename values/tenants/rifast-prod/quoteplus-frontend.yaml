@@ -5,7 +5,7 @@ env: rifast-prod
 # gitops-quote-mrea/CLAUDE.md's equivalent note). CI (a new Jenkins stage
 # pointed at this file) owns this - do not hand-edit outside a rollback.
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-frontend-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-frontend-rifast
   tag: "latest"   # PLACEHOLDER - no RIFAST-specific Jenkins stage exists yet, no real
   # image published. Non-empty on purpose so the chart's `required` guard
   # passes and the Deployment actually renders - expected to ImagePullBackOff

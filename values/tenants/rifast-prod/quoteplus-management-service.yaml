@@ -1,7 +1,7 @@
 env: rifast-prod
 
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-management-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-management-rifast
   tag: "latest"   # PLACEHOLDER - no RIFAST-specific Jenkins stage yet, no real image
   # published. Non-empty on purpose so the chart's `required` guard passes and
   # the Deployment actually renders - expected to ImagePullBackOff until

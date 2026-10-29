@@ -3,7 +3,7 @@
 # substitution, not real YAML editing (see gitops-quote-mrea/CLAUDE.md).
 # No RIFAST-specific Jenkins stage exists yet.
 image:
-  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-temporal-worker-dev
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-temporal-worker-rifast
   tag: "latest"   # PLACEHOLDER - CI-owned, no Jenkins stage yet, no real image
   # published. Non-empty on purpose so the chart's `required` guard passes and
   # the Deployment actually renders - expected to ImagePullBackOff until
