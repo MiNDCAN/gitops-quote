@@ -78,5 +78,16 @@ externalSecret:
 # its dev team a working connection without ever handing out the DB
 # password itself. Only takes effect on a FRESH pgAdmin PVC - see
 # servers-configmap.yaml's own note on one-time-only import.
+#
+# pgadminLoginEmail MUST exactly match PGADMIN_DEFAULT_EMAIL's real value
+# (not the Key Vault secret NAME - the actual email string). pgAdmin
+# (server mode) resolves a server's "PassFile" relative to that specific
+# login's own per-user storage directory
+# (/var/lib/pgadmin/storage/<email, @ replaced with _>/), never an
+# arbitrary absolute path - confirmed by reading pgAdmin's own
+# get_complete_file_path()/get_storage_directory() source in the running
+# container. Committing the email here (not the password) is why this is
+# a plain value, not another externalSecret.data entry.
 pgpassFile:
   enabled: false
+  pgadminLoginEmail: ""
