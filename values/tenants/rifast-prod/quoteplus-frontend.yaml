@@ -6,7 +6,7 @@ env: rifast-prod
 # pointed at this file) owns this - do not hand-edit outside a rollback.
 image:
   repository: nexus-registry.mindcaninc.com:8443/quoteplus-rifast/quoteplus-frontend-dev
-  tag: "latest"   # PLACEHOLDER - no RIFAST-specific Jenkins stage exists yet, no real
+  tag: "1.0.0-28"   # PLACEHOLDER - no RIFAST-specific Jenkins stage exists yet, no real
   # image published. Non-empty on purpose so the chart's `required` guard
   # passes and the Deployment actually renders - expected to ImagePullBackOff
   # until Jenkins publishes a real tag here. Confirmed acceptable by the user.
