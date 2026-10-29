@@ -24,6 +24,9 @@ data:
           "MaintenanceDB": {{ .Values.dbServer.maintenanceDb | quote }},
           "Username": {{ .Values.dbServer.username | quote }},
           "SSLMode": "prefer"
+          {{- if .Values.pgpassFile.enabled }},
+          "PassFile": "/pgadmin4/pgpass"
+          {{- end }}
         }
       }
     }

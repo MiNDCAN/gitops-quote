@@ -47,6 +47,14 @@ workloadIdentity:
 externalSecret:
   enabled: true
   # REPLACE_WITH_REAL_VALUE - not yet populated in kv-rifast-quoteplus.
+  # PGPASS_FILE is a *:*:*:username:password line (wildcarded host/port/db
+  # since there's only one server entry) - see pgpassFile.enabled below.
   data:
     PGADMIN_DEFAULT_EMAIL: "rifast-pgadmin-default-email"
     PGADMIN_DEFAULT_PASSWORD: "rifast-pgadmin-default-password"
+    PGPASS_FILE: "rifast-pgadmin-pgpass"
+
+# Dev team should never need the real DB password to use pgAdmin - see
+# chart's own values.yaml comment for the full mechanism.
+pgpassFile:
+  enabled: true

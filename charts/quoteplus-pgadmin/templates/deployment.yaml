@@ -48,6 +48,11 @@ spec:
             - name: servers
               mountPath: /pgadmin4/servers.json
               subPath: servers.json
+            {{- if .Values.pgpassFile.enabled }}
+            - name: pgpass
+              mountPath: /pgadmin4/pgpass
+              subPath: pgpass
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
@@ -57,3 +62,12 @@ spec:
         - name: servers
           configMap:
             name: {{ .Release.Name }}-servers
+        {{- if .Values.pgpassFile.enabled }}
+        - name: pgpass
+          secret:
+            secretName: {{ .Release.Name }}-secrets
+            defaultMode: 0600
+            items:
+              - key: PGPASS_FILE
+                path: pgpass
+        {{- end }}
