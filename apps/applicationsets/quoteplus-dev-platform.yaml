@@ -71,7 +71,9 @@ spec:
         targetRevision: main
         path: 'charts/{{.service}}'
         helm:
-          releaseName: '{{.service}}'
+          # -dev suffix so resource/pod names are distinguishable at a
+          # glance (e.g. quoteplus-cert-manager-dev) - explicit instruction.
+          releaseName: '{{.service}}-dev'
           ignoreMissingValueFiles: true
           valueFiles:
             - '../../values/tenants/dev/{{.service}}.yaml'
