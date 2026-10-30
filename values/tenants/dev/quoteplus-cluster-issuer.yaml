@@ -1,0 +1,5 @@
+name: quoteplus-letsencrypt-prod
+acme:
+  server: https://acme-v02.api.letsencrypt.org/directory
+  email: "DEVOPSCoreTeam@mindcaninc.com"
+  ingressClassName: nginx

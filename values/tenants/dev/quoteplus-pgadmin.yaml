@@ -1,0 +1,54 @@
+ingress:
+  host: "dev-quoteplus.pgadmin.mindcaninc.com"
+
+# dbServer.host is in-cluster Service DNS, same everywhere - not overridden.
+# maintenanceDb/username must match quoteplus-postgres.yaml's database/
+# POSTGRES_USER for dev.
+#
+# KNOWN EXCEPTION to this repo's "nothing committed" policy: this chart's
+# templates/servers-configmap.yaml unconditionally renders a ConfigMap
+# from these dbServer.* fields (no `if` guard, no Secret-backed path -
+# pgAdmin's PGADMIN_SERVER_JSON_FILE mechanism only reads a mounted file,
+# and this chart mounts it from a ConfigMap, not a Secret). Content is
+# display metadata only (name/host/port/maintenanceDb/username, no
+# password) - flagged, not silently left unmentioned.
+dbServer:
+  name: "Dev - App DB"
+  # mnc_quoteplus_dev is a fresh, empty bootstrap database - no real
+  # customer data here, unlike rifast-prod's restored-from-customerdemo DB.
+  maintenanceDb: "mnc_quoteplus_dev"
+  username: "quoteplusdevuser01"   # matches quoteplus-postgres.yaml's POSTGRES_USER
+
+# Internal login only, same as stage - SSO via Keycloak once a pgadmin
+# client exists in a dev realm (not yet set up).
+#
+# IMPORTANT: this chart's own values.yaml bakes a non-empty secrets: map
+# as the CHART DEFAULT (PGADMIN_DEFAULT_EMAIL/PASSWORD = "REPLACE_WITH_
+# REAL_VALUE"), same class of bug found in quoteplus-temporal-worker -
+# Helm deep-merges maps, so secrets: {} here does NOT clear it. Worse
+# here: templates/secret.yaml has no guard tying it to externalSecret.
+# enabled, so leaving the inherited keys un-nulled renders BOTH a plain
+# Secret (from secret.yaml) and an ExternalSecret-owned Secret under the
+# SAME name, fighting over ownership. Nulled explicitly below - confirmed
+# via `helm template` that only the ExternalSecret-owned Secret renders.
+secrets:
+  PGADMIN_DEFAULT_EMAIL: null
+  PGADMIN_DEFAULT_PASSWORD: null
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-quoteplus-dev.
+  data:
+    PGADMIN_DEFAULT_EMAIL: "dev-pgadmin-default-email"
+    PGADMIN_DEFAULT_PASSWORD: "dev-pgadmin-default-password"
+
+# Off - the "dev team should never see the DB password" requirement was
+# specific to RIFAST's production customer; not carried over here by
+# default since this is a shared general-purpose sandbox, not a single
+# named login. Can be enabled later the same way rifast-prod's chart
+# values.yaml documents, if there's a real need.
+pgpassFile:
+  enabled: false

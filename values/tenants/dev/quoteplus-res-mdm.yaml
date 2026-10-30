@@ -1,0 +1,50 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-res-mdm-service-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.res-mdm.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE items still need real business data in Key
+  # Vault; structural ones (DB host, in-cluster URLs) get populated with
+  # their already-known real values. Shared keys reuse the SAME Key Vault
+  # secret name across every service that needs them.
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    AWS_REGION: "dev-aws-region"
+    AWS_S3_BUCKET: "dev-resmdm-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "dev-resmdm-public-aws-s3-bucket"
+    EMAIL_HOST: "dev-email-host"
+    EMAIL_PORT: "dev-email-port"
+    EMAIL_SECURE: "dev-email-secure"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    LANGUAGE_SERVICE_URL: "dev-resmdm-language-service-url"
+    APPLICATION_URL: "dev-application-url"
+    DATABASE_USERNAME: "dev-app-database-user"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    DATABASE_NAME: "dev-app-database-name"
+    AWS_ACCESS_KEY_ID: "dev-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "dev-aws-secret-access-key"
+    EMAIL_USER: "dev-email-user"
+    EMAIL_PASSWORD: "dev-email-password"
+    EMAIL_FROM: "dev-email-from"

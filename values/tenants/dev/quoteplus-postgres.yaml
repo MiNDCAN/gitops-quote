@@ -1,0 +1,27 @@
+# This instance's own superuser, used by every dev app service's
+# DATABASE_NAME/USERNAME/PASSWORD.
+#
+# `database` below only controls the bootstrap POSTGRES_DB env var, which
+# the postgres image's entrypoint only acts on during initdb (first boot
+# with an empty PGDATA) - it creates a database literally named
+# "quoteplus" and is otherwise inert forever after. The REAL app database,
+# "mnc_quoteplus_dev" (= dev-app-database-name in Key Vault), still needs
+# to be created manually (`CREATE DATABASE ... OWNER quoteplusdevuser01`)
+# once the postgres pod is actually running - no real business data to
+# restore here, unlike rifast-prod's customerdemo-sourced database. The
+# bootstrap "quoteplus" database this field creates is unused.
+database: "quoteplus"
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # POSTGRES_USER/POSTGRES_PASSWORD must exist in kv-quoteplus-dev under
+  # these exact names before this syncs (az keyvault secret set) -
+  # REPLACE_WITH_REAL_VALUE: not yet populated.
+  data:
+    POSTGRES_USER: "dev-postgres-user"
+    POSTGRES_PASSWORD: "dev-postgres-password"

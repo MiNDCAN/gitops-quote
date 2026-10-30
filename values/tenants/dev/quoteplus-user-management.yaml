@@ -1,0 +1,57 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-user-management-service-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.user.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # No Keycloak realm exists for dev yet - out of scope for the
+  # infra/gitops buildout, needs to be set up separately (don't assume or
+  # reuse rifast-prod's realm). dev-keycloak-server-url/-realm/-client-id/
+  # -client-secret/-client-uuid/-web-client-id all stay REPLACE_WITH_REAL_VALUE
+  # until that happens. QP_KEYCLOAK_CLIENT_UUID is set to "unused" - stage's
+  # own real deployment has this field empty too (confirmed in
+  # gitops-quote-mrea), the app code doesn't actually read it. REDIS_PASSWORD
+  # is a no-op either way (chart's Redis has no AUTH configured, confirmed
+  # for stage - same chart used here) but kept for parity/forward-compatibility.
+  data:
+    QP_KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    QP_KEYCLOAK_REALM: "dev-keycloak-realm"
+    QP_KEYCLOAK_CLIENT_ID: "dev-keycloak-client-id"
+    QP_KEYCLOAK_CLIENT_UUID: "dev-keycloak-client-uuid"
+    QP_KEYCLOAK_WEB_CLIENT_ID: "dev-keycloak-web-client-id"
+    VALID_APPLICATIONIDS: "dev-user-management-valid-applicationids"
+    QP_APP_REDIRECT_URL: "dev-application-url"
+    MAGIC_LINK_EXPIRE_TIME: "dev-user-management-magic-link-expire-time"
+    REDIS_HOST: "dev-redis-host"
+    REDIS_PORT: "dev-redis-port"
+    QP_KEYCLOAK_CLIENT_SECRET: "dev-keycloak-client-secret"
+    REDIS_PASSWORD: "dev-redis-password-noop"
+    # METABASE_SITE_URL points at a single shared MindCan-hosted Metabase
+    # instance (not customer-specific) - same instance customerdemo and
+    # other non-dedicated tenants use. METABASE_COLLECTION_ID is left as a
+    # placeholder since this is a general-purpose dev environment with no
+    # assigned collection of its own yet.
+    USERS_API_URL: "dev-user-management-users-api-url"
+    METABASE_USERNAME: "dev-metabase-username"
+    METABASE_PASSWORD: "dev-metabase-password"
+    METABASE_SITE_URL: "dev-metabase-site-url"
+    METABASE_JWT_SHARED_SECRET: "dev-metabase-jwt-shared-secret"
+    METABASE_COLLECTION_ID: "dev-user-management-metabase-collection-id"

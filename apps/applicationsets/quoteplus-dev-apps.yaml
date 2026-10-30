@@ -1,0 +1,115 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: quoteplus-dev-apps
+  namespace: argocd
+  labels:
+    team: quoteplus
+    solution: quoteplus
+    customer: internal
+    type: application-set
+    layer: apps
+  annotations:
+    argocd.argoproj.io/description: "QuotePlus microservices + data for the general-purpose dev environment (not customer-specific). Full stage-parity service set, including Temporal/distribution-list - see values/tenants/dev/."
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          # Data layer (wave 10): must be reachable before the services that
+          # connect to them sync.
+          - service: quoteplus-postgres
+            namespace: quote-postgres
+            wave: "10"
+          - service: quoteplus-redis
+            namespace: quote-redis
+            wave: "10"
+          - service: quoteplus-pgadmin
+            namespace: quote-pgadmin
+            wave: "10"
+          - service: quoteplus-temporal-postgres
+            namespace: quote-temporal
+            wave: "10"
+          - service: quoteplus-temporal
+            namespace: quote-temporal
+            wave: "15"
+          # App layer (wave 20).
+          - service: quoteplus-frontend
+            namespace: quote-frontend
+            wave: "20"
+          - service: quoteplus-framework
+            namespace: quote-framework
+            wave: "20"
+          - service: quoteplus-mdmservice
+            namespace: quote-mdmservice
+            wave: "20"
+          - service: quoteplus-res-mdm
+            namespace: quote-res-mdm
+            wave: "20"
+          - service: quoteplus-report
+            namespace: quote-report
+            wave: "20"
+          - service: quoteplus-supplier
+            namespace: quote-supplier
+            wave: "20"
+          - service: quoteplus-user-management
+            namespace: quote-user-management
+            wave: "20"
+          - service: quoteplus-customer-management
+            namespace: quote-customer-management
+            wave: "20"
+          - service: quoteplus-language
+            namespace: quote-language
+            wave: "20"
+          - service: quoteplus-management-service
+            namespace: quotemanagement-service
+            wave: "20"
+          - service: quoteplus-distribution-list
+            namespace: quote-distribution-list
+            wave: "20"
+          - service: quoteplus-temporal-worker
+            namespace: quote-temporal-worker
+            wave: "20"
+  template:
+    metadata:
+      name: 'quoteplus-dev-{{.service}}'
+      namespace: argocd
+      labels:
+        team: quoteplus
+        solution: quoteplus
+        customer: internal
+        type: application
+        layer: apps
+        service: '{{.service}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{.wave}}'
+    spec:
+      project: quoteplus-dev
+      destination:
+        name: aks-quoteplus-dev
+        namespace: '{{.namespace}}'
+      source:
+        repoURL: https://github.com/MiNDCAN/gitops-quote.git
+        # Deliberately main, not production - this is a general-purpose dev
+        # environment with no customer to protect from an accidental push,
+        # and fast iteration is the point. See this repo's CLAUDE.md and the
+        # dev environment's own plan notes for the full reasoning.
+        targetRevision: main
+        path: 'charts/{{.service}}'
+        helm:
+          releaseName: '{{.service}}'
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - '../../values/tenants/dev/{{.service}}.yaml'
+      ignoreDifferences:
+        - group: apps
+          kind: StatefulSet
+          jqPathExpressions:
+            - '.spec.volumeClaimTemplates'
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - ApplyOutOfSyncOnly=true

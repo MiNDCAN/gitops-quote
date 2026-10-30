@@ -1,0 +1,82 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-customer-management-service-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.customer.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # Two distinct AWS credential pairs exist here (AWS_S3_ACCESS_ID/KEY vs
+  # AWS_ACCESS_KEY_ID/SECRET) and two distinct client-secret pairs
+  # (AZURE_CLIENT_SECRET vs CLIENT_SECRET) - genuinely different keys, not
+  # duplicates, kept as separate Key Vault secret names same as stage.
+  # REPLACE_WITH_REAL_VALUE items still need real business data in Key
+  # Vault; structural ones get populated with their already-known values.
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    SUP_MDM_URL: "dev-customer-sup-mdm-url"
+    LANGUAGE_SERVICE_URL: "dev-customer-language-service-url"
+    QUOTE_URL: "dev-customer-quote-url"
+    EMAIL_HOST: "dev-email-host"
+    EMAIL_PORT: "dev-email-port"
+    EMAIL_SECURE: "dev-email-secure"
+    SHAREPOINT_ROOT_FOLDER: "dev-sharepoint-root-folder"
+    SITE_URL: "dev-customer-site-url"
+    AZURE_TENANT_ID: "dev-azure-tenant-id"
+    AZURE_CLIENT_ID: "dev-azure-client-id"
+    AZURE_SHAREPOINT_SITE_ID: "dev-sharepoint-site-id"
+    AZURE_SHAREPOINT_DRIVE_ID: "dev-sharepoint-drive-id"
+    APP_CLOUD_STORAGE: "dev-customer-app-cloud-storage"
+    AWS_S3_REGION: "dev-aws-region"
+    AWS_S3_BUCKET_NAME: "dev-customer-aws-s3-bucket-name"
+    CLIENT_ID: "dev-azure-client-id"
+    SITE_ID: "dev-sharepoint-site-id"
+    DRIVE_ID: "dev-sharepoint-drive-id"
+    TENANT_ID: "dev-azure-tenant-id"
+    FILE_PATH: "dev-customer-file-path"
+    MICROSOFT_OAUTH_TOKEN_URL: "dev-microsoft-oauth-token-url"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    # Global Data sync - not in customerdemo's current real deployment
+    # manifest, but kept wired here for structural parity with rifast-prod's
+    # equivalent file (that one was wired per an explicit RIFAST-specific
+    # instruction - carrying the same fields over to dev costs nothing and
+    # keeps the two tenant files easy to diff against each other).
+    GLOBAL_DATA_SP_FOLDER_PATH: "dev-customer-global-data-sp-folder-path"
+    GLOBAL_DATA_SP_FILE_PATTERN: "dev-customer-global-data-sp-file-pattern"
+    GLOBAL_DATA_SYNC_TAB_NAME: "dev-customer-global-data-sync-tab-name"
+    GLOBAL_DATA_SP_DRIVE_ID: "dev-customer-global-data-sp-drive-id"
+    GLOBAL_DATA_SYNC_CRON: "dev-customer-global-data-sync-cron"
+    GLOBAL_DATA_SYNC_TIMEZONE: "dev-customer-global-data-sync-timezone"
+    GLOBAL_DATA_SYNC_NOTIFY: "dev-customer-global-data-sync-notify"
+    DATA_ADMIN_ROLE: "dev-customer-data-admin-role"
+    AWS_ACCESS_KEY_ID: "dev-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "dev-aws-secret-access-key"
+    DATABASE_NAME: "dev-app-database-name"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    DATABASE_USER_NAME: "dev-app-database-user"
+    EMAIL_FROM: "dev-email-from"
+    EMAIL_PASSWORD: "dev-email-password"
+    EMAIL_USER: "dev-email-user"
+    AWS_S3_ACCESS_ID: "dev-aws-s3-access-id"
+    AWS_S3_ACCESS_KEY: "dev-aws-s3-access-key"
+    AZURE_CLIENT_SECRET: "dev-azure-client-secret"
+    CLIENT_SECRET: "dev-client-secret"

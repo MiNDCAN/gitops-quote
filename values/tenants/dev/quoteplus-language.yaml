@@ -1,0 +1,34 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-language-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.language.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-quoteplus-dev.
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    DATABASE_NAME: "dev-app-database-name"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    DATABASE_USER_NAME: "dev-app-database-user"

@@ -1,0 +1,86 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-management-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.management.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # REPLACE_WITH_REAL_VALUE - not yet populated in kv-quoteplus-dev.
+  # DATABASE_USER_NAME duplicates DATABASE_USERNAME on purpose - this
+  # service's own code reads the former (a confirmed typo vs. other
+  # services, see gitops-quote-mrea's equivalent file).
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    AWS_REGION: "dev-aws-region"
+    AWS_S3_BUCKET: "dev-management-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "dev-management-public-aws-s3-bucket"
+    EMAIL_HOST: "dev-email-host"
+    EMAIL_PORT: "dev-email-port"
+    EMAIL_SECURE: "dev-email-secure"
+    SHAREPOINT_ROOT_FOLDER: "dev-sharepoint-root-folder"
+    # Found missing entirely during a cross-check against
+    # MNC_QUOTE_REPO@customerdemo's real deployment manifest - this key was
+    # never added during the original configApp->Key Vault conversion.
+    SHAREPOINT_TEMPLATE_FOLDER: "dev-management-sharepoint-template-folder"
+    APP_CLOUD_STORAGE: "dev-management-app-cloud-storage"
+    BASE_URL: "dev-application-url"
+    USER_DETAILS_URL: "dev-management-user-details-url"
+    MICROSOFT_OAUTH_TOKEN_URL: "dev-microsoft-oauth-token-url"
+    CLIENT_ID: "dev-azure-client-id"
+    SITE_ID: "dev-sharepoint-site-id"
+    DRIVE_ID: "dev-sharepoint-drive-id"
+    FRAMEWORK_URL: "dev-management-framework-url"
+    SITE_URL: "dev-management-site-url"
+    TENANT_ID: "dev-azure-tenant-id"
+    FILE_PATH: "dev-management-file-path"
+    MDM_URL: "dev-management-mdm-url"
+    LANGUAGE_SERVICE_URL: "dev-management-language-service-url"
+    SUPPLIER_URL: "dev-management-supplier-url"
+    MODEL_TYPE: "dev-management-model-type"
+    # Found missing entirely during the same cross-check - this service's
+    # real ConfigMap has a SECOND, distinct AWS S3 credential pair
+    # (AWS_S3_ACCESS_ID/KEY/REGION/BUCKET_NAME) alongside the plain one
+    # above (AWS_ACCESS_KEY_ID/SECRET_ACCESS_KEY) - genuinely two different
+    # keys, same pattern as quoteplus-supplier.yaml/quoteplus-customer-
+    # management.yaml already document.
+    AWS_S3_ACCESS_ID: "dev-aws-s3-access-id"
+    AWS_S3_ACCESS_KEY: "dev-aws-s3-access-key"
+    AWS_S3_REGION: "dev-aws-region"
+    AWS_S3_BUCKET_NAME: "dev-management-aws-s3-bucket-name"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    KEYCLOAK_CLIENT_ID: "dev-keycloak-client-id"
+    IS_EMAIL_ENABLED: "dev-management-is-email-enabled"
+    DATABASE_USERNAME: "dev-app-database-user"
+    DATABASE_USER_NAME: "dev-app-database-user"
+    DATABASE_NAME: "dev-app-database-name"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    AWS_ACCESS_KEY_ID: "dev-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "dev-aws-secret-access-key"
+    EMAIL_USER: "dev-email-user"
+    EMAIL_FROM: "dev-email-from"
+    EMAIL_PASSWORD: "dev-email-password"
+    CLIENT_SECRET: "dev-client-secret"
+    KEYCLOAK_CLIENT_SECRET: "dev-keycloak-client-secret"
+    # Matches the value given to quoteplus-temporal-worker.yaml -
+    # the worker calls this service's GraphQL using this as a bearer key.
+    INTERNAL_API_KEY: "dev-internal-api-key"

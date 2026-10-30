@@ -1,0 +1,57 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-mdm-service-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.mdm.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below. See quoteplus-framework.yaml
+# for the full reasoning on this pattern and CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # LIMANS is a shared Martinrea integration, not customer-specific (same
+  # reasoning as rifast-prod's equivalent file) - left as a placeholder
+  # here regardless, per the general dev-secrets decision.
+  # DATABASE_USER_NAME duplicates DATABASE_USERNAME on purpose - mdm-
+  # service's own code reads the former (a confirmed typo vs. other
+  # services, see gitops-quote-mrea's equivalent file).
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    AWS_REGION: "dev-aws-region"
+    AWS_S3_BUCKET: "dev-mdmservice-aws-s3-bucket"
+    PUBLIC_AWS_S3_BUCKET: "dev-mdmservice-public-aws-s3-bucket"
+    EMAIL_HOST: "dev-email-host"
+    EMAIL_PORT: "dev-email-port"
+    EMAIL_SECURE: "dev-email-secure"
+    LIMANS_API_ID: "dev-limans-api-id"
+    LIMANS_URL: "dev-limans-url"
+    QUOTE_SERVICE_URL: "dev-mdmservice-quote-service-url"
+    LANGUAGE_SERVICE_URL: "dev-mdmservice-language-service-url"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    DATABASE_USERNAME: "dev-app-database-user"
+    DATABASE_USER_NAME: "dev-app-database-user"
+    DATABASE_NAME: "dev-app-database-name"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    AWS_ACCESS_KEY_ID: "dev-aws-access-key-id"
+    AWS_SECRET_ACCESS_KEY: "dev-aws-secret-access-key"
+    EMAIL_USER: "dev-email-user"
+    EMAIL_FROM: "dev-email-from"
+    EMAIL_PASSWORD: "dev-email-password"
+    LIMANS_API_KEY: "dev-limans-api-key"
+    LIMANS_TOKEN: "dev-limans-token"

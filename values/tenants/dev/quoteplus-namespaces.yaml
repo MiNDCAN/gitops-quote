@@ -1,0 +1,25 @@
+# The 16 quote-* namespaces must match QUOTE_AZURE_INFRA/terraform/tenants/
+# dev/workload_identity.tf's workload_identity_namespaces list exactly -
+# each needs a federated credential there to pull secrets via ESO.
+# quote-external-secrets is the one exception: it hosts the ESO controller
+# itself, not a secret consumer, so it isn't in that Terraform list (same
+# as every other namespace's SecretStore ServiceAccount - the controller's
+# own namespace was never part of that per-consumer list in the first place).
+namespaces:
+  - quote-frontend
+  - quote-framework
+  - quote-mdmservice
+  - quote-res-mdm
+  - quote-report
+  - quote-supplier
+  - quote-user-management
+  - quote-customer-management
+  - quote-language
+  - quotemanagement-service
+  - quote-redis
+  - quote-postgres
+  - quote-pgadmin
+  - quote-temporal
+  - quote-temporal-worker
+  - quote-distribution-list
+  - quote-external-secrets

@@ -1,0 +1,54 @@
+env: dev
+
+image:
+  repository: nexus-registry.mindcaninc.com:8443/quoteplus-dev/quoteplus-framework-dev
+  tag: "0.0.0-placeholder"   # CI-owned - new Jenkins job hasn't built yet; this gets overwritten on first real build.
+
+ingress:
+  host: "dev-quoteplus.framework.mindcaninc.com"
+
+# Nothing committed here - every value (even non-secret config) is sourced
+# from Key Vault via externalSecret.data below, not just real secrets.
+# envFrom.configMaps overridden to [] since no ConfigMap is rendered at all
+# (configApp is empty) - same override pattern quoteplus-frontend already
+# used for its own all-empty case. See CLAUDE.md.
+configApp: {}
+
+envFrom:
+  configMaps: []
+
+secrets: {}
+
+workloadIdentity:
+  enabled: true
+
+externalSecret:
+  enabled: true
+  # Shared keys (dev-database-*, dev-keycloak-*) reuse the SAME Key
+  # Vault secret name across every service that needs them - populate once,
+  # every service picks it up. Service-specific keys are prefixed
+  # dev-framework-*. REPLACE_WITH_REAL_VALUE items still need real
+  # business data in Key Vault; structural ones (DB host, in-cluster URLs)
+  # get populated with their already-known real values.
+  data:
+    DATABASE_HOST: "dev-database-host"
+    DATABASE_PORT: "dev-database-port"
+    DB_SCHEMA: "dev-db-schema"
+    MAX_WORKERS: "dev-framework-max-workers"
+    LOG_LEVEL: "dev-framework-log-level"
+    NOTIFICATION_API_URL: "dev-framework-notification-api-url"
+    SHAREPOINT_SCOPE: "dev-sharepoint-scope"
+    SHAREPOINT_SITE_ID: "dev-sharepoint-site-id"
+    KEYCLOAK_SERVER_URL: "dev-keycloak-server-url"
+    KEYCLOAK_REALM: "dev-keycloak-realm"
+    KEYCLOAK_CLIENT_ID: "dev-keycloak-client-id"
+    USER_MANAGEMENT_SERVICE_URL: "dev-framework-user-management-service-url"
+    APPLICATION_ID: "dev-application-id"
+    DATABASE_NAME: "dev-app-database-name"
+    DATABASE_USER_NAME: "dev-app-database-user"
+    DATABASE_PASSWORD: "dev-app-database-password"
+    SUPPORT_EMAIL: "dev-support-email"
+    AZURE_CLIENT_ID: "dev-azure-client-id"
+    AZURE_TENANT_ID: "dev-azure-tenant-id"
+    AZURE_CLIENT_SECRET: "dev-azure-client-secret"
+    KEYCLOAK_CLIENT_SECRET: "dev-keycloak-client-secret"
