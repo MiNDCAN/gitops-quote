@@ -64,6 +64,11 @@ configApp:
 
 envFrom:
   configMaps: []
+  # Chart default hardcodes "quoteplus-temporal-worker-secrets" (pre-dates
+  # the -dev releaseName suffix) - override to match the Secret name
+  # templates/externalsecret.yaml actually creates ({{ .Release.Name }}-secrets).
+  secrets:
+    - quoteplus-temporal-worker-dev-secrets
 
 workloadIdentity:
   enabled: true

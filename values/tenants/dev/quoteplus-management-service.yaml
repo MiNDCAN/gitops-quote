@@ -14,6 +14,11 @@ configApp: {}
 
 envFrom:
   configMaps: []
+  # Chart default hardcodes "quoteplus-management-service-secrets"
+  # (pre-dates the -dev releaseName suffix) - override to match the Secret
+  # name templates/externalsecret.yaml actually creates ({{ .Release.Name }}-secrets).
+  secrets:
+    - quoteplus-management-service-dev-secrets
 
 secrets: {}
 
