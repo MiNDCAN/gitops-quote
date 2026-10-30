@@ -18,6 +18,27 @@
 # ID/secret below all depend on a Keycloak realm for dev, which doesn't
 # exist yet - REPLACE_WITH_REAL_VALUE throughout.
 temporal:
+  server:
+    config:
+      persistence:
+        datastores:
+          # Chart defaults hardcode "quoteplus-temporal-postgres-service"
+          # (no -dev) and "quoteplus-temporal-secrets" (no -dev) - both
+          # pre-date the -dev releaseName suffix. The actual Service
+          # (charts/quoteplus-temporal-postgres, releaseName
+          # quoteplus-temporal-postgres-dev) and Secret
+          # (templates/externalsecret.yaml, releaseName
+          # quoteplus-temporal-dev) are both -dev suffixed, so both need
+          # overriding here or the schema Job/server can't reach Postgres
+          # (confirmed live: "no such host" DNS failure) or read its secret.
+          default:
+            sql:
+              connectAddr: "quoteplus-temporal-postgres-dev-service.quote-temporal.svc.cluster.local:5432"
+              existingSecret: quoteplus-temporal-dev-secrets
+          visibility:
+            sql:
+              connectAddr: "quoteplus-temporal-postgres-dev-service.quote-temporal.svc.cluster.local:5432"
+              existingSecret: quoteplus-temporal-dev-secrets
   web:
     ingress:
       annotations:
@@ -31,35 +52,37 @@ temporal:
             - dev-quoteplus.temporal.mindcaninc.com
           secretName: quoteplus-temporal-ui-tls
     additionalEnv:
+      # name: below is the Secret name (quoteplus-temporal-dev-secrets, -dev
+      # suffixed to match this chart's -dev releaseName), not a literal key.
       - name: TEMPORAL_AUTH_ENABLED
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_ENABLED
       - name: TEMPORAL_AUTH_PROVIDER_URL
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_PROVIDER_URL
       - name: TEMPORAL_AUTH_CLIENT_ID
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_CLIENT_ID
       - name: TEMPORAL_AUTH_CLIENT_SECRET
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_CLIENT_SECRET
       - name: TEMPORAL_AUTH_CALLBACK_URL
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_CALLBACK_URL
       - name: TEMPORAL_AUTH_SCOPES
         valueFrom:
           secretKeyRef:
-            name: quoteplus-temporal-secrets
+            name: quoteplus-temporal-dev-secrets
             key: TEMPORAL_AUTH_SCOPES
 
 secrets: {}
